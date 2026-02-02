@@ -1,6 +1,6 @@
-# Progent Coding Agent
+# Progent
 
-Secure coding agent with policy enforcement.
+Secure coding agent with policy enforcement via the `progent` library.
 
 ## Quick Start
 
@@ -12,7 +12,7 @@ conda activate progent
 # 2. Install dependencies
 cd implementations
 pip install -r requirements.txt
-pip install -e ..  # Install secagent
+pip install -e ..  # Install progent library
 
 # 3. Set API key
 cp env.template .env
@@ -53,7 +53,7 @@ llm:
 **`policies.json`** - Security policies (JSON Schema format):
 ```json
 {
-  "write_file": [{"priority": 1, "effect": "allow", "conditions": {
+  "write_file": [{"priority": 1, "effect": 0, "conditions": {
     "file_path": {"pattern": "^(?!.*\\.env).*$"}
   }}]
 }
@@ -67,6 +67,9 @@ OPENROUTER_API_KEY=sk-or-v1-xxx
 ## Structure
 
 ```
+progent/                  # The standalone Progent library (framework-agnostic core + adapters for the specific frameworks).
+secagent/                 # Original progent's authors implementation kept for reference.
+
 implementations/
 ├── run_agent.py          # CLI entry point
 ├── config.yaml           # LLM and agent config
@@ -88,6 +91,18 @@ implementations/
 ├── sandbox/              # Default workspace
 └── logs/                 # Agent logs
 ```
+
+## What is `progent/`?
+
+`progent/` is a **Python library** (SDK) that provides the core Progent policy engine:
+- Framework-agnostic policy enforcement (`check_tool_call`, `@secure`)
+- JSON Schema-based argument validation
+- Optional adapters (LangChain, MCP)
+- optional analysis/generation modules (not fully functional yet)
+
+It is built and distributed as a **pip-installable package** via `pyproject.toml`
+
+This repo uses it in `implementations/` through `core/progent_enforcer.py`.
 
 ## Adding Tools
 
