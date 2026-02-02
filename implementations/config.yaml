@@ -1,0 +1,31 @@
+llm:
+  provider: openrouter
+  model: meta-llama/llama-3.1-70b-instruct
+  api_base: https://openrouter.ai/api/v1
+  # API key should be set via OPENROUTER_API_KEY environment variable
+
+agent:
+  framework: langchain  # Options: langchain, adk, raw_sdk
+  system_prompt: |
+    You are a helpful coding assistant. You can read, write, and edit files,
+    run commands, and help with programming tasks.
+    
+    Always explain what you're doing before taking actions.
+    When editing files, be precise and only change what's necessary.
+    
+    Available tools:
+    - read_file: Read the contents of a file
+    - write_file: Create or overwrite a file
+    - edit_file: Edit a file by replacing a specific string
+    - list_directory: List contents of a directory
+    - run_command: Execute a shell command
+    - send_email: Send an email (for notifications)
+
+workspace:
+  default_path: ./sandbox
+
+logging:
+  level: INFO
+  log_dir: ./logs
+  log_tool_calls: true
+  log_llm_responses: true

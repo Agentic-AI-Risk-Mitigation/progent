@@ -1,0 +1,48 @@
+# Python
+*.pyc
+__pycache__/
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Environment
+.env
+*.env.local
+.venv/
+venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs and runtime
+implementations/logs/*
+!implementations/logs/.gitkeep
+
+# Sandbox (agent workspace)
+implementations/sandbox/*
+!implementations/sandbox/.gitkeep
+
+# Binary files
+*.bin
+*.pkl
+
+# ============================================
+# BENCHMARK FRAMEWORKS (not needed for MVP)
+# These are only for reproducing paper experiments
+# ============================================
+
+# AgentDojo benchmark
+agentdojo/
+
+# ASB (Agent Security Benchmark)
+asb/
+
+# EHRAgent benchmark
+ehragent/
+
+# Paper PDF (optional - uncomment to keep)
+# progent.pdf
