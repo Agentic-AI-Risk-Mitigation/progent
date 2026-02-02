@@ -84,10 +84,13 @@ class LangChainAgent(BaseAgent):
         
         @langchain_tool
         def read_file(file_path: str) -> str:
-            """Read the contents of a file.
+            """Read and return the full contents of a file. You will receive the actual file contents.
             
             Args:
                 file_path: Path to the file to read (relative to workspace)
+            
+            Returns:
+                The complete text content of the file.
             """
             logger.tool_call("read_file", {"file_path": file_path})
             allowed, reason = enforce_policy("read_file", {"file_path": file_path})
@@ -108,9 +111,15 @@ class LangChainAgent(BaseAgent):
         def write_file(file_path: str, content: str) -> str:
             """Create or overwrite a file with the given content.
             
+            When writing multi-line content, include actual newlines in your content string,
+            not the literal characters backslash-n.
+            
             Args:
                 file_path: Path to the file to write (relative to workspace)
-                content: The content to write to the file
+                content: The content to write to the file (use actual newlines for multi-line content)
+            
+            Returns:
+                Confirmation message with file size and line count.
             """
             logger.tool_call("write_file", {"file_path": file_path, "content": f"[{len(content)} chars]"})
             allowed, reason = enforce_policy("write_file", {"file_path": file_path, "content": content})
@@ -185,10 +194,16 @@ class LangChainAgent(BaseAgent):
         
         @langchain_tool
         def run_command(command: str) -> str:
-            """Execute a shell command in the workspace directory.
+            """Execute a shell command and return its output. You will receive the actual stdout/stderr from the command.
+            
+            IMPORTANT: After calling this tool, you MUST read the returned output carefully and report it accurately.
+            DO NOT guess or make up the output - use exactly what is returned to you.
             
             Args:
                 command: The shell command to execute
+            
+            Returns:
+                The actual stdout and stderr output from the command execution.
             """
             logger.tool_call("run_command", {"command": command})
             allowed, reason = enforce_policy("run_command", {"command": command})
@@ -248,13 +263,14 @@ class LangChainAgent(BaseAgent):
         # Create the agent
         agent = create_tool_calling_agent(self.llm, self.tools, prompt)
         
-        # Create executor
+        # Create executor with return_intermediate_steps for debugging
         executor = AgentExecutor(
             agent=agent,
             tools=self.tools,
-            verbose=False,  # We handle our own logging
+            verbose=True,  # Enable verbose to see tool calls in console
             handle_parsing_errors=True,
             max_iterations=10,
+            return_intermediate_steps=True,  # Return tool calls for logging
         )
         
         return executor
@@ -268,6 +284,12 @@ class LangChainAgent(BaseAgent):
             })
             
             response = result.get("output", "No response generated.")
+            
+            # Log intermediate steps (tool calls and results)
+            intermediate_steps = result.get("intermediate_steps", [])
+            for i, (action, observation) in enumerate(intermediate_steps):
+                self.logger.info(f"Step {i+1}: {action.tool}({action.tool_input})")
+                self.logger.info(f"Result: {observation[:500]}..." if len(str(observation)) > 500 else f"Result: {observation}")
             
             # Update chat history
             self.chat_history.append(HumanMessage(content=user_input))

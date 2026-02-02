@@ -8,6 +8,39 @@ from typing import Optional
 _workspace: Optional[Path] = None
 
 
+def _process_escape_sequences(content: str) -> str:
+    """
+    Process escape sequences in content.
+    
+    LLMs sometimes send literal escape sequences (e.g., '\\n' as two characters)
+    instead of actual escape characters. This function converts common ones.
+    
+    We use a targeted approach rather than unicode_escape to avoid issues
+    with unicode characters and unexpected decoding.
+    """
+    # Check if content contains likely escape sequences
+    if '\\n' not in content and '\\t' not in content and '\\r' not in content:
+        return content
+    
+    # Replace common escape sequences manually
+    # Order matters: handle double backslash last to avoid double-processing
+    result = content
+    
+    # First, temporarily replace actual escaped backslashes to preserve them
+    placeholder = "\x00ESCAPED_BACKSLASH\x00"
+    result = result.replace('\\\\', placeholder)
+    
+    # Now replace common escape sequences
+    result = result.replace('\\n', '\n')
+    result = result.replace('\\t', '\t')
+    result = result.replace('\\r', '\r')
+    
+    # Restore escaped backslashes
+    result = result.replace(placeholder, '\\')
+    
+    return result
+
+
 def set_workspace(path: str | Path) -> None:
     """Set the workspace directory for file operations."""
     global _workspace
@@ -85,13 +118,17 @@ def write_file(file_path: str, content: str) -> str:
     # Check if file existed
     existed = resolved.exists()
     
-    # Write the content
-    resolved.write_text(content, encoding="utf-8")
+    # Process escape sequences (LLMs often send literal \n instead of newlines)
+    processed_content = _process_escape_sequences(content)
     
-    # Return confirmation
+    # Write the content
+    resolved.write_text(processed_content, encoding="utf-8")
+    
+    # Return confirmation with line count for clarity
+    line_count = processed_content.count('\n') + 1
+    size = len(processed_content.encode("utf-8"))
     action = "Updated" if existed else "Created"
-    size = len(content.encode("utf-8"))
-    return f"{action} file: {file_path} ({size} bytes)"
+    return f"{action} file: {file_path} ({size} bytes, {line_count} lines)"
 
 
 def edit_file(file_path: str, old_string: str, new_string: str) -> str:
@@ -117,11 +154,22 @@ def edit_file(file_path: str, old_string: str, new_string: str) -> str:
     # Read current content
     content = resolved.read_text(encoding="utf-8")
     
+    # Process escape sequences in both old and new strings
+    processed_old = _process_escape_sequences(old_string)
+    processed_new = _process_escape_sequences(new_string)
+    
     # Count occurrences
-    count = content.count(old_string)
+    count = content.count(processed_old)
     
     if count == 0:
-        raise ValueError(f"String not found in file: '{old_string[:50]}{'...' if len(old_string) > 50 else ''}'")
+        # Try the original strings in case escape processing changed them incorrectly
+        count_original = content.count(old_string)
+        if count_original > 0:
+            processed_old = old_string
+            processed_new = new_string
+            count = count_original
+        else:
+            raise ValueError(f"String not found in file: '{old_string[:50]}{'...' if len(old_string) > 50 else ''}'")
     
     if count > 1:
         raise ValueError(
@@ -129,14 +177,14 @@ def edit_file(file_path: str, old_string: str, new_string: str) -> str:
         )
     
     # Perform the replacement
-    new_content = content.replace(old_string, new_string)
+    new_content = content.replace(processed_old, processed_new)
     
     # Write back
     resolved.write_text(new_content, encoding="utf-8")
     
     # Calculate change stats
-    old_lines = old_string.count("\n") + 1
-    new_lines = new_string.count("\n") + 1
+    old_lines = processed_old.count("\n") + 1
+    new_lines = processed_new.count("\n") + 1
     
     return f"Edited file: {file_path} (replaced {old_lines} line(s) with {new_lines} line(s))"
 

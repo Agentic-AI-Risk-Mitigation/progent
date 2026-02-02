@@ -66,9 +66,13 @@ class BaseAgent(ABC):
         print(f"Framework: {self.__class__.__name__}")
         print(f"Model: {self.config.get('llm', {}).get('model', 'unknown')}")
         print(f"{'='*60}")
-        print("Type 'exit' or 'quit' to end the session.")
-        print("Type 'clear' to clear the conversation history.")
+        print("Commands:")
+        print("  exit/quit  - End the session")
+        print("  clear      - Clear conversation history")
+        print("  verbose    - Toggle verbose tool output")
         print(f"{'='*60}\n")
+        
+        verbose_mode = True  # Show tool calls by default
         
         while True:
             try:
@@ -88,10 +92,17 @@ class BaseAgent(ABC):
                     print("Conversation history cleared.\n")
                     continue
                 
+                if user_input.lower() == "verbose":
+                    verbose_mode = not verbose_mode
+                    print(f"Verbose mode: {'ON' if verbose_mode else 'OFF'}\n")
+                    continue
+                
                 # Log user input
                 self.logger.user_input(user_input)
                 
                 # Get agent response
+                if verbose_mode:
+                    print("\n[Processing...]")
                 response = self.run(user_input)
                 
                 # Log and display response
