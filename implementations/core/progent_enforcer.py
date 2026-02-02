@@ -1,21 +1,22 @@
-"""Progent policy enforcement wrapper."""
+"""Progent policy enforcement wrapper for implementations.
+
+This module provides a simplified interface to the progent library,
+adding logging integration specific to this demo application.
+"""
 
 import json
-import sys
 from pathlib import Path
 from typing import Any, Callable, Optional
 
-# Add parent directory to path to import secagent
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
-from secagent import (
+# Import from the new progent library
+from progent import (
     check_tool_call,
     update_security_policy,
     update_available_tools,
     get_available_tools,
-    apply_secure_tool_wrapper,
+    load_policies as progent_load_policies,
+    ProgentBlockedError,
 )
-from secagent.tool import ValidationError
 
 from .logging_utils import get_logger
 
@@ -24,39 +25,10 @@ def load_policies(policies_path: str | Path) -> dict:
     """
     Load policies from a JSON file.
     
-    The file format matches Progent's internal format:
-    {
-        "tool_name": [
-            {
-                "priority": 1,
-                "effect": 0,  # 0=allow, 1=deny
-                "conditions": {...},  # JSON Schema
-                "fallback": 0  # 0=error, 1=terminate, 2=ask user
-            }
-        ]
-    }
+    This is a thin wrapper around progent.load_policies that returns
+    the loaded policies dict.
     """
-    path = Path(policies_path)
-    if not path.exists():
-        raise FileNotFoundError(f"Policies file not found: {policies_path}")
-    
-    with open(path, "r") as f:
-        raw_policies = json.load(f)
-    
-    # Convert to Progent's internal format (list of tuples)
-    converted = {}
-    for tool_name, rules in raw_policies.items():
-        converted[tool_name] = []
-        for rule in rules:
-            # (priority, effect, conditions, fallback)
-            converted[tool_name].append((
-                rule.get("priority", 1),
-                rule.get("effect", 0),
-                rule.get("conditions", {}),
-                rule.get("fallback", 0),
-            ))
-    
-    return converted
+    return progent_load_policies(policies_path)
 
 
 def init_progent(
@@ -74,7 +46,6 @@ def init_progent(
     
     # Load and apply policies
     policies = load_policies(policies_path)
-    update_security_policy(policies)
     
     logger = get_logger()
     logger.info(f"Progent initialized with {len(tools)} tools and {len(policies)} policies")
@@ -94,7 +65,7 @@ def enforce_policy(tool_name: str, kwargs: dict[str, Any]) -> tuple[bool, str]:
         check_tool_call(tool_name, kwargs)
         logger.progent_decision(tool_name, kwargs, allowed=True)
         return True, ""
-    except ValidationError as e:
+    except ProgentBlockedError as e:
         reason = str(e)
         logger.progent_decision(tool_name, kwargs, allowed=False, reason=reason)
         return False, reason
@@ -166,7 +137,6 @@ class ProgentEnforcedRegistry:
         self._tools[tool_name] = wrapped
         
         # Build tool definition for Progent
-        # Extract parameter info (simplified)
         import inspect
         sig = inspect.signature(func)
         params = {}
