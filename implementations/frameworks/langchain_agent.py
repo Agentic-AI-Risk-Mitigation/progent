@@ -1,4 +1,13 @@
-"""LangChain-based agent implementation."""
+"""
+LangChain-based agent implementation.
+
+This is a THIN ADAPTER that:
+1. Converts unified tool definitions to LangChain format
+2. Initializes the LangChain LLM and agent
+
+Tool definitions and policy enforcement are handled by core modules.
+DO NOT define tools or policy logic here.
+"""
 
 import os
 import sys
@@ -9,30 +18,22 @@ from typing import Any, Optional
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from langchain_openai import ChatOpenAI
-from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
-from langchain_core.tools import tool as langchain_tool
+from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.tools import StructuredTool
 from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 from frameworks.base_agent import BaseAgent
-from core.logging_utils import get_logger
-from core.progent_enforcer import init_progent, enforce_policy
-from tools.file_tools import (
-    read_file as _read_file,
-    write_file as _write_file,
-    edit_file as _edit_file,
-    list_directory as _list_directory,
-)
-from tools.command_tools import run_command as _run_command
-from tools.communication_tools import send_email as _send_email
+from core.progent_enforcer import init_progent
+from core.tool_definitions import TOOL_DEFINITIONS, ToolDefinition
+from core.secured_executor import create_secured_handler
 
 
 class LangChainAgent(BaseAgent):
     """
     Agent implementation using LangChain.
     
-    Uses ChatOpenAI with OpenRouter as the backend,
-    and LangChain's tool calling agent.
+    Uses ChatOpenAI with OpenRouter as the backend.
     """
     
     def __init__(
@@ -61,16 +62,16 @@ class LangChainAgent(BaseAgent):
             temperature=0.1,
         )
         
-        # Create tools with policy enforcement
-        self.tools = self._create_tools()
-        
-        # Initialize Progent
+        # Initialize Progent policies
         if policies_path:
-            tool_definitions = [
+            tool_defs = [
                 {"name": t.name, "description": t.description, "args": {}}
-                for t in self.tools
+                for t in TOOL_DEFINITIONS
             ]
-            init_progent(policies_path, tool_definitions)
+            init_progent(policies_path, tool_defs)
+        
+        # Create tools (converted from unified definitions)
+        self.tools = self._create_tools()
         
         # Create the agent
         self.agent_executor = self._create_agent(config)
@@ -78,181 +79,33 @@ class LangChainAgent(BaseAgent):
         # Conversation history
         self.chat_history = []
     
-    def _create_tools(self) -> list:
-        """Create LangChain tools with Progent policy enforcement."""
-        logger = get_logger()
+    def _create_tools(self) -> list[StructuredTool]:
+        """Convert unified tool definitions to LangChain StructuredTool format."""
+        tools = []
         
-        @langchain_tool
-        def read_file(file_path: str) -> str:
-            """Read and return the full contents of a file. You will receive the actual file contents.
+        for tool_def in TOOL_DEFINITIONS:
+            # Get secured handler (with logging + policy enforcement)
+            handler = create_secured_handler(tool_def)
             
-            Args:
-                file_path: Path to the file to read (relative to workspace)
+            # Get Pydantic model for proper schema (critical for LangChain!)
+            args_schema = tool_def.to_pydantic_model()
             
-            Returns:
-                The complete text content of the file.
-            """
-            logger.tool_call("read_file", {"file_path": file_path})
-            allowed, reason = enforce_policy("read_file", {"file_path": file_path})
-            if not allowed:
-                result = f"Policy blocked: {reason}"
-                logger.tool_result("read_file", result, success=False)
-                return result
-            try:
-                result = _read_file(file_path)
-                logger.tool_result("read_file", f"Read {len(result)} chars", success=True)
-                return result
-            except Exception as e:
-                result = f"Error: {e}"
-                logger.tool_result("read_file", result, success=False)
-                return result
+            # Convert to LangChain tool with explicit schema
+            tool = StructuredTool(
+                name=tool_def.name,
+                description=tool_def.description,
+                func=handler,
+                args_schema=args_schema,
+            )
+            tools.append(tool)
         
-        @langchain_tool
-        def write_file(file_path: str, content: str) -> str:
-            """Create or overwrite a file with the given content.
-            
-            When writing multi-line content, include actual newlines in your content string,
-            not the literal characters backslash-n.
-            
-            Args:
-                file_path: Path to the file to write (relative to workspace)
-                content: The content to write to the file (use actual newlines for multi-line content)
-            
-            Returns:
-                Confirmation message with file size and line count.
-            """
-            logger.tool_call("write_file", {"file_path": file_path, "content": f"[{len(content)} chars]"})
-            allowed, reason = enforce_policy("write_file", {"file_path": file_path, "content": content})
-            if not allowed:
-                result = f"Policy blocked: {reason}"
-                logger.tool_result("write_file", result, success=False)
-                return result
-            try:
-                result = _write_file(file_path, content)
-                logger.tool_result("write_file", result, success=True)
-                return result
-            except Exception as e:
-                result = f"Error: {e}"
-                logger.tool_result("write_file", result, success=False)
-                return result
-        
-        @langchain_tool
-        def edit_file(file_path: str, old_string: str, new_string: str) -> str:
-            """Edit a file by replacing a specific string with a new string.
-            
-            The old_string must exist in the file exactly once for the replacement to succeed.
-            
-            Args:
-                file_path: Path to the file to edit (relative to workspace)
-                old_string: The exact string to find and replace
-                new_string: The string to replace it with
-            """
-            logger.tool_call("edit_file", {
-                "file_path": file_path,
-                "old_string": f"[{len(old_string)} chars]",
-                "new_string": f"[{len(new_string)} chars]"
-            })
-            allowed, reason = enforce_policy("edit_file", {
-                "file_path": file_path,
-                "old_string": old_string,
-                "new_string": new_string
-            })
-            if not allowed:
-                result = f"Policy blocked: {reason}"
-                logger.tool_result("edit_file", result, success=False)
-                return result
-            try:
-                result = _edit_file(file_path, old_string, new_string)
-                logger.tool_result("edit_file", result, success=True)
-                return result
-            except Exception as e:
-                result = f"Error: {e}"
-                logger.tool_result("edit_file", result, success=False)
-                return result
-        
-        @langchain_tool
-        def list_directory(path: str = ".") -> str:
-            """List the contents of a directory.
-            
-            Args:
-                path: Path to the directory to list (relative to workspace, defaults to workspace root)
-            """
-            logger.tool_call("list_directory", {"path": path})
-            allowed, reason = enforce_policy("list_directory", {"path": path})
-            if not allowed:
-                result = f"Policy blocked: {reason}"
-                logger.tool_result("list_directory", result, success=False)
-                return result
-            try:
-                result = _list_directory(path)
-                logger.tool_result("list_directory", result, success=True)
-                return result
-            except Exception as e:
-                result = f"Error: {e}"
-                logger.tool_result("list_directory", result, success=False)
-                return result
-        
-        @langchain_tool
-        def run_command(command: str) -> str:
-            """Execute a shell command and return its output. You will receive the actual stdout/stderr from the command.
-            
-            IMPORTANT: After calling this tool, you MUST read the returned output carefully and report it accurately.
-            DO NOT guess or make up the output - use exactly what is returned to you.
-            
-            Args:
-                command: The shell command to execute
-            
-            Returns:
-                The actual stdout and stderr output from the command execution.
-            """
-            logger.tool_call("run_command", {"command": command})
-            allowed, reason = enforce_policy("run_command", {"command": command})
-            if not allowed:
-                result = f"Policy blocked: {reason}"
-                logger.tool_result("run_command", result, success=False)
-                return result
-            try:
-                result = _run_command(command)
-                logger.tool_result("run_command", result, success=True)
-                return result
-            except Exception as e:
-                result = f"Error: {e}"
-                logger.tool_result("run_command", result, success=False)
-                return result
-        
-        @langchain_tool
-        def send_email(to: str, subject: str, body: str) -> str:
-            """Send an email notification.
-            
-            Args:
-                to: The recipient email address
-                subject: The email subject line
-                body: The email body content
-            """
-            logger.tool_call("send_email", {"to": to, "subject": subject, "body": f"[{len(body)} chars]"})
-            allowed, reason = enforce_policy("send_email", {"to": to, "subject": subject, "body": body})
-            if not allowed:
-                result = f"Policy blocked: {reason}"
-                logger.tool_result("send_email", result, success=False)
-                return result
-            try:
-                result = _send_email(to, subject, body)
-                logger.tool_result("send_email", result, success=True)
-                return result
-            except Exception as e:
-                result = f"Error: {e}"
-                logger.tool_result("send_email", result, success=False)
-                return result
-        
-        return [read_file, write_file, edit_file, list_directory, run_command, send_email]
+        return tools
     
     def _create_agent(self, config: dict[str, Any]) -> AgentExecutor:
         """Create the LangChain agent executor."""
-        # Get system prompt
         agent_config = config.get("agent", {})
         system_prompt = agent_config.get("system_prompt", "You are a helpful coding assistant.")
         
-        # Create prompt template
         prompt = ChatPromptTemplate.from_messages([
             ("system", system_prompt),
             MessagesPlaceholder(variable_name="chat_history"),
@@ -260,20 +113,16 @@ class LangChainAgent(BaseAgent):
             MessagesPlaceholder(variable_name="agent_scratchpad"),
         ])
         
-        # Create the agent
         agent = create_tool_calling_agent(self.llm, self.tools, prompt)
         
-        # Create executor with return_intermediate_steps for debugging
-        executor = AgentExecutor(
+        return AgentExecutor(
             agent=agent,
             tools=self.tools,
-            verbose=True,  # Enable verbose to see tool calls in console
+            verbose=True,
             handle_parsing_errors=True,
             max_iterations=10,
-            return_intermediate_steps=True,  # Return tool calls for logging
+            return_intermediate_steps=True,
         )
-        
-        return executor
     
     def run(self, user_input: str) -> str:
         """Process user input and return response."""
@@ -285,11 +134,9 @@ class LangChainAgent(BaseAgent):
             
             response = result.get("output", "No response generated.")
             
-            # Log intermediate steps (tool calls and results)
-            intermediate_steps = result.get("intermediate_steps", [])
-            for i, (action, observation) in enumerate(intermediate_steps):
+            # Log intermediate steps
+            for i, (action, observation) in enumerate(result.get("intermediate_steps", [])):
                 self.logger.info(f"Step {i+1}: {action.tool}({action.tool_input})")
-                self.logger.info(f"Result: {observation[:500]}..." if len(str(observation)) > 500 else f"Result: {observation}")
             
             # Update chat history
             self.chat_history.append(HumanMessage(content=user_input))
