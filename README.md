@@ -9,7 +9,7 @@ Secure coding agent with policy enforcement via the `progent` library.
 conda create -n progent python=3.11 -y
 conda activate progent
 
-# 2. Install dependencies (from repo root)
+# 2. Install dependencies 
 cd implementations
 pip install -r requirements.txt
 pip install -e ..  # Install progent library
@@ -23,53 +23,10 @@ cp env.template .env
 python run_agent.py
 ```
 
-## CLI Options
-
-Run from `implementations/examples/coding_agent/`:
-
-```bash
-python run_agent.py                              # Default (LangChain + sandbox)
-python run_agent.py --workspace ./my_project     # Custom workspace
-python run_agent.py --framework adk              # Use Google ADK
-python run_agent.py --framework raw_sdk          # Use raw OpenAI SDK
-python run_agent.py --model anthropic/claude-3.5-sonnet  # Different model
-python run_agent.py --policies custom.json       # Custom policies file
-```
-
-| Flag | Description |
-|------|-------------|
-| `-w, --workspace` | Working directory for the agent |
-| `-f, --framework` | `langchain`, `adk`, or `raw_sdk` |
-| `-m, --model` | LLM model (OpenRouter format) |
-| `-p, --policies` | Path to policies JSON file |
-| `-c, --config` | Path to config YAML file |
-
-## Configuration
-
-All config files are in `implementations/examples/coding_agent/`:
-
-**`config.yaml`** - LLM settings, system prompt, logging:
-```yaml
-llm:
-  model: meta-llama/llama-3.1-70b-instruct
-  api_base: https://openrouter.ai/api/v1
-```
-
-**`policies.json`** - Security policies (JSON Schema format):
-```json
-{
-  "write_file": [{"priority": 1, "effect": 0, "conditions": {
-    "file_path": {"pattern": "^(?!.*\\.env).*$"}
-  }}]
-}
-```
-
-**`.env`** - API keys:
-```
-OPENROUTER_API_KEY=sk-or-v1-xxx
-```
-
 ## Repository Structure
+
+The idea for the repo structure is to have a progent/ sdk directory, which would be what we develop. secagent/ is the original implementation by the Progent authors which can be nice for reference (https://github.com/sunblaze-ucb/progent/tree/main). implementations/ is what a developer using our progent library would create. Feel free to propose a better structure.
+
 
 ```
 progent/                          # PROGENT SDK (pip-installable library)
@@ -135,6 +92,29 @@ cp -r coding_agent my_new_agent
 # Edit config.yaml, policies.json, run_agent.py as needed
 ```
 
+
+## CLI Options
+
+Run from `implementations/examples/coding_agent/`:
+
+```bash
+python run_agent.py                              # Default (LangChain + sandbox)
+python run_agent.py --workspace ./my_project     # Custom workspace
+python run_agent.py --framework adk              # Use Google ADK
+python run_agent.py --framework raw_sdk          # Use raw OpenAI SDK
+python run_agent.py --model anthropic/claude-3.5-sonnet  # Different model
+python run_agent.py --policies custom.json       # Custom policies file
+```
+
+| Flag | Description |
+|------|-------------|
+| `-w, --workspace` | Working directory for the agent |
+| `-f, --framework` | `langchain`, `adk`, or `raw_sdk` |
+| `-m, --model` | LLM model (OpenRouter format) |
+| `-p, --policies` | Path to policies JSON file |
+| `-c, --config` | Path to config YAML file |
+
+
 ## REPL Commands
 
 | Command | Action |
@@ -142,3 +122,29 @@ cp -r coding_agent my_new_agent
 | `exit` | Quit |
 | `clear` | Clear conversation |
 | `verbose` | Toggle tool output |
+
+
+## Configuration
+
+All config files are in `implementations/examples/coding_agent/`:
+
+**`config.yaml`** - LLM settings, system prompt, logging:
+```yaml
+llm:
+  model: meta-llama/llama-3.1-70b-instruct
+  api_base: https://openrouter.ai/api/v1
+```
+
+**`policies.json`** - Security policies (JSON Schema format):
+```json
+{
+  "write_file": [{"priority": 1, "effect": 0, "conditions": {
+    "file_path": {"pattern": "^(?!.*\\.env).*$"}
+  }}]
+}
+```
+
+**`.env`** - API keys:
+```
+OPENROUTER_API_KEY=sk-or-v1-xxx
+```
