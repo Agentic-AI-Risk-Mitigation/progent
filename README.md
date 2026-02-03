@@ -15,6 +15,7 @@ pip install -r requirements.txt
 pip install -e ..  # Install progent library
 
 # 3. Set API key
+cd examples/coding_agent
 cp env.template .env
 # Edit .env and add your OPENROUTER_API_KEY
 
@@ -64,32 +65,47 @@ llm:
 OPENROUTER_API_KEY=sk-or-v1-xxx
 ```
 
-## Structure
+## Repository Structure
 
 ```
-progent/                  # The standalone Progent library (framework-agnostic core + adapters for the specific frameworks).
-secagent/                 # Original progent's authors implementation kept for reference.
+progent/                      # PROGENT SDK (pip-installable library)
+├── core.py                   # Policy enforcement engine
+├── policy.py                 # Policy loading/saving
+├── validation.py             # JSON Schema validation
+├── wrapper.py                # @secure decorator
+├── analysis.py               # Z3-based policy analysis (optional)
+├── generation.py             # LLM policy generation (optional)
+└── adapters/
+    ├── langchain.py          # LangChain integration
+    └── mcp.py                # MCP middleware
 
-implementations/
-├── run_agent.py          # CLI entry point
-├── config.yaml           # LLM and agent config
-├── policies.json         # Security policies
-├── core/
+tests/                        # SDK tests
+└── test_progent/
+
+implementations/              # AGENT IMPLEMENTATIONS
+├── core/                     # Shared infrastructure (stable)
 │   ├── tool_definitions.py   # All tools defined HERE (single source)
 │   ├── secured_executor.py   # Policy enforcement wrapper
 │   ├── progent_enforcer.py   # Progent integration
-│   └── logging_utils.py      # Logging
-├── frameworks/
+│   └── logging_utils.py
+├── frameworks/               # Agent adapters (stable)
 │   ├── base_agent.py         # Shared agent logic
 │   ├── langchain_agent.py    # LangChain adapter
 │   ├── adk_agent.py          # Google ADK adapter
 │   └── raw_sdk_agent.py      # OpenAI SDK adapter
-├── tools/
-│   ├── file_tools.py         # read/write/edit/list
-│   ├── command_tools.py      # run_command
-│   └── communication_tools.py # send_email (dummy)
-├── sandbox/              # Default workspace
-└── logs/                 # Agent logs
+├── tools/                    # Tool implementations (stable)
+│   ├── file_tools.py
+│   ├── command_tools.py
+│   └── communication_tools.py
+└── examples/                 # EXAMPLES (freely editable)
+    └── coding_agent/         # Main example
+        ├── run_agent.py      # Entry point
+        ├── config.yaml       # Agent configuration
+        ├── policies.json     # Security policies
+        ├── sandbox/          # Workspace
+        └── logs/
+
+secagent/                     # Original implementation (reference only)
 ```
 
 ## What is `progent/`?
@@ -98,15 +114,13 @@ implementations/
 - Framework-agnostic policy enforcement (`check_tool_call`, `@secure`)
 - JSON Schema-based argument validation
 - Optional adapters (LangChain, MCP)
-- optional analysis/generation modules (not fully functional yet)
+- Optional analysis/generation modules
 
 It is built and distributed as a **pip-installable package** via `pyproject.toml`
 
-This repo uses it in `implementations/` through `core/progent_enforcer.py`.
-
 ## Adding Tools
 
-Edit `core/tool_definitions.py`:
+Edit `implementations/core/tool_definitions.py`:
 
 ```python
 ToolDefinition(
@@ -120,6 +134,16 @@ ToolDefinition(
 ```
 
 All frameworks automatically get the new tool.
+
+## Creating New Examples
+
+Copy an existing example and modify:
+
+```bash
+cd implementations/examples
+cp -r coding_agent my_new_agent
+# Edit config.yaml, policies.json, run_agent.py as needed
+```
 
 ## REPL Commands
 

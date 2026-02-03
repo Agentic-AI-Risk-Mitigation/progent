@@ -10,20 +10,21 @@ Usage:
 """
 
 import argparse
-import os
 import sys
 from pathlib import Path
 
-# Add implementations directory to path for imports
-IMPL_DIR = Path(__file__).parent.resolve()
-sys.path.insert(0, str(IMPL_DIR))
+# Directory setup
+EXAMPLE_DIR = Path(__file__).parent.resolve()  # coding_agent/
+IMPL_DIR = EXAMPLE_DIR.parent.parent.resolve()  # implementations/
+ROOT_DIR = IMPL_DIR.parent.resolve()  # progent/
 
-# Add parent directory for secagent imports
-sys.path.insert(0, str(IMPL_DIR.parent))
+# Add paths for imports
+sys.path.insert(0, str(IMPL_DIR))  # For core/, frameworks/, tools/
+sys.path.insert(0, str(ROOT_DIR))  # For progent/
 
 # Load environment variables from .env file
 from dotenv import load_dotenv
-load_dotenv(IMPL_DIR / ".env")
+load_dotenv(EXAMPLE_DIR / ".env")
 
 import yaml
 
@@ -35,9 +36,6 @@ def load_config(config_path: str | Path) -> dict:
 
 
 def main():
-    # Get the implementations directory
-    impl_dir = Path(__file__).parent.resolve()
-    
     parser = argparse.ArgumentParser(
         description="Progent Coding Agent - A secure coding assistant with policy enforcement",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -68,14 +66,14 @@ def main():
     parser.add_argument(
         "--config", "-c",
         type=str,
-        default=str(impl_dir / "config.yaml"),
+        default=str(EXAMPLE_DIR / "config.yaml"),
         help="Path to config file (default: ./config.yaml)",
     )
     
     parser.add_argument(
         "--policies", "-p",
         type=str,
-        default=str(impl_dir / "policies.json"),
+        default=str(EXAMPLE_DIR / "policies.json"),
         help="Path to policies file (default: ./policies.json)",
     )
     
@@ -110,14 +108,14 @@ def main():
         workspace = Path(args.workspace).resolve()
     else:
         default_workspace = config.get("workspace", {}).get("default_path", "./sandbox")
-        workspace = (impl_dir / default_workspace).resolve()
+        workspace = (EXAMPLE_DIR / default_workspace).resolve()
     
     # Ensure workspace exists
     workspace.mkdir(parents=True, exist_ok=True)
     
     # Initialize logging
     log_dir = args.log_dir or config.get("logging", {}).get("log_dir", "./logs")
-    log_dir = (impl_dir / log_dir).resolve()
+    log_dir = (EXAMPLE_DIR / log_dir).resolve()
     log_level = config.get("logging", {}).get("level", "INFO")
     
     from core.logging_utils import init_logger

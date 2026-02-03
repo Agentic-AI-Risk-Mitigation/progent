@@ -30,6 +30,8 @@ implementations/sandbox/*
 *.bin
 *.pkl
 
+*/logs/*
+
 # ============================================
 # BENCHMARK FRAMEWORKS (not needed for MVP)
 # These are only for reproducing paper experiments

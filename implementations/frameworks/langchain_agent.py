@@ -47,7 +47,7 @@ class LangChainAgent(BaseAgent):
         # Get LLM config
         llm_config = config.get("llm", {})
         api_base = llm_config.get("api_base", "https://openrouter.ai/api/v1")
-        model = llm_config.get("model", "meta-llama/llama-3.1-70b-instruct")
+        model = llm_config.get("model", "deepseek/deepseek-v3.2")
         
         # Get API key from environment
         api_key = os.environ.get("OPENROUTER_API_KEY")
