@@ -10,7 +10,618 @@ This is an OPTIONAL module. It requires z3-solver to be installed:
 """
 
 from typing import Any
+import re
+import warnings
 
+# Handle deprecation of sre_constants and sre_parse in Python 3.11+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", DeprecationWarning)
+    import sre_constants
+    import sre_parse
+
+
+# =============================================================================
+# Z3 Type Initialization (lazy loaded)
+# =============================================================================
+
+# These are initialized lazily when Z3 is first used
+_z3_types_initialized = False
+_NullType = None
+_ArrayWrapper_string = None
+_ArrayWrapper_integer = None
+_ArrayWrapper_number = None
+_ArrayWrapper_boolean = None
+_ArrayWrapper_null = None
+_ARRAY_WRAPPERS = None
+_ARRAY_WRAPPER_ACCESSORS = None
+
+
+def _init_z3_types():
+    """Initialize Z3 custom datatypes for null and arrays."""
+    global _z3_types_initialized
+    global _NullType
+    global _ArrayWrapper_string, _ArrayWrapper_integer, _ArrayWrapper_number
+    global _ArrayWrapper_boolean, _ArrayWrapper_null
+    global _ARRAY_WRAPPERS, _ARRAY_WRAPPER_ACCESSORS
+    
+    if _z3_types_initialized:
+        return
+    
+    from z3 import (
+        Datatype, ArraySort, IntSort, StringSort, RealSort, BoolSort
+    )
+    
+    # Define a global Z3 datatype for null.
+    NullType = Datatype('NullType')
+    NullType.declare('null')
+    _NullType = NullType.create()
+    
+    # Define Z3 datatypes for arrays.
+    # ArrayWrapper has two fields:
+    #   a: an array from Int to Type
+    #   len: an integer representing the length of the array.
+    
+    # Array wrapper for arrays of strings.
+    ArrayWrapper_string = Datatype('ArrayWrapper_string')
+    ArrayWrapper_string.declare(
+        'mkArrayWrapper',
+        ('a', ArraySort(IntSort(), StringSort())),
+        ('len', IntSort())
+    )
+    _ArrayWrapper_string = ArrayWrapper_string.create()
+    
+    # Array wrapper for arrays of integers.
+    ArrayWrapper_integer = Datatype('ArrayWrapper_integer')
+    ArrayWrapper_integer.declare(
+        'mkArrayWrapper',
+        ('a', ArraySort(IntSort(), IntSort())),
+        ('len', IntSort())
+    )
+    _ArrayWrapper_integer = ArrayWrapper_integer.create()
+    
+    # Array wrapper for arrays of reals (numbers).
+    ArrayWrapper_number = Datatype('ArrayWrapper_number')
+    ArrayWrapper_number.declare(
+        'mkArrayWrapper',
+        ('a', ArraySort(IntSort(), RealSort())),
+        ('len', IntSort())
+    )
+    _ArrayWrapper_number = ArrayWrapper_number.create()
+    
+    # Array wrapper for arrays of booleans.
+    ArrayWrapper_boolean = Datatype('ArrayWrapper_boolean')
+    ArrayWrapper_boolean.declare(
+        'mkArrayWrapper',
+        ('a', ArraySort(IntSort(), BoolSort())),
+        ('len', IntSort())
+    )
+    _ArrayWrapper_boolean = ArrayWrapper_boolean.create()
+    
+    # Array wrapper for arrays of null.
+    ArrayWrapper_null = Datatype('ArrayWrapper_null')
+    ArrayWrapper_null.declare(
+        'mkArrayWrapper',
+        ('a', ArraySort(IntSort(), _NullType)),
+        ('len', IntSort())
+    )
+    _ArrayWrapper_null = ArrayWrapper_null.create()
+    
+    # A list of all array wrappers.
+    _ARRAY_WRAPPERS = [
+        _ArrayWrapper_string,
+        _ArrayWrapper_integer,
+        _ArrayWrapper_number,
+        _ArrayWrapper_boolean,
+        _ArrayWrapper_null
+    ]
+    
+    # Map each array wrapper sort to its accessors (the 'a' field and the 'len' field).
+    _ARRAY_WRAPPER_ACCESSORS = {
+        _ArrayWrapper_string: (_ArrayWrapper_string.a, _ArrayWrapper_string.len),
+        _ArrayWrapper_integer: (_ArrayWrapper_integer.a, _ArrayWrapper_integer.len),
+        _ArrayWrapper_number: (_ArrayWrapper_number.a, _ArrayWrapper_number.len),
+        _ArrayWrapper_boolean: (_ArrayWrapper_boolean.a, _ArrayWrapper_boolean.len),
+        _ArrayWrapper_null: (_ArrayWrapper_null.a, _ArrayWrapper_null.len),
+    }
+    
+    _z3_types_initialized = True
+
+
+# =============================================================================
+# Regex to Z3 Conversion (ported from secagent/role_analyzer.py)
+# =============================================================================
+
+def _minus(re1, re2):
+    """
+    The Z3 regex matching all strings accepted by re1 but not re2.
+    """
+    from z3 import Intersect, Complement
+    return Intersect(re1, Complement(re2))
+
+
+def _any_char():
+    """
+    The Z3 regex matching any character (ASCII range).
+    """
+    from z3 import Range
+    return Range(chr(0), chr(127))
+
+
+def _category_regex(category):
+    """
+    Defines regex categories in Z3.
+    """
+    from z3 import Range, Union, Re
+    
+    if sre_constants.CATEGORY_DIGIT == category:
+        return Range("0", "9")
+    elif sre_constants.CATEGORY_SPACE == category:
+        return Union(
+            Re(" "), Re("\t"), Re("\n"), Re("\r"), Re("\f"), Re("\v")
+        )
+    elif sre_constants.CATEGORY_WORD == category:
+        return Union(
+            Range("a", "z"), Range("A", "Z"), Range("0", "9"), Re("_")
+        )
+    else:
+        raise NotImplementedError(
+            f"Regex category {category} not yet implemented"
+        )
+
+
+def _regex_construct_to_z3_expr(regex_construct):
+    """
+    Translates a specific regex construct into its Z3 equivalent.
+    """
+    from z3 import Re, Option, Star, Plus, Loop, Union, Range, Concat
+    
+    node_type, node_value = regex_construct
+    
+    if sre_constants.LITERAL == node_type:  # a
+        return Re(chr(node_value))
+    
+    if sre_constants.NOT_LITERAL == node_type:  # [^a]
+        return _minus(_any_char(), Re(chr(node_value)))
+    
+    if sre_constants.SUBPATTERN == node_type:
+        _, _, _, value = node_value
+        return _regex_to_z3_expr(value)
+    
+    elif sre_constants.ANY == node_type:  # .
+        return _any_char()
+    
+    elif sre_constants.MAX_REPEAT == node_type:
+        low, high, value = node_value
+        if (0, 1) == (low, high):  # a?
+            return Option(_regex_to_z3_expr(value))
+        elif (0, sre_constants.MAXREPEAT) == (low, high):  # a*
+            return Star(_regex_to_z3_expr(value))
+        elif (1, sre_constants.MAXREPEAT) == (low, high):  # a+
+            return Plus(_regex_to_z3_expr(value))
+        else:  # a{3,5}, a{3}
+            return Loop(_regex_to_z3_expr(value), low, high)
+    
+    elif sre_constants.IN == node_type:  # [abc]
+        first_subnode_type, _ = node_value[0]
+        if sre_constants.NEGATE == first_subnode_type:  # [^abc]
+            return _minus(
+                _any_char(),
+                Union(
+                    [_regex_construct_to_z3_expr(value) for value in node_value[1:]]
+                ),
+            )
+        else:
+            return Union([_regex_construct_to_z3_expr(value) for value in node_value])
+    
+    elif sre_constants.BRANCH == node_type:  # ab|cd
+        _, value = node_value
+        return Union([_regex_to_z3_expr(v) for v in value])
+    
+    elif sre_constants.RANGE == node_type:  # [a-z]
+        low, high = node_value
+        return Range(chr(low), chr(high))
+    
+    elif sre_constants.CATEGORY == node_type:  # \d, \s, \w
+        if sre_constants.CATEGORY_DIGIT == node_value:  # \d
+            return _category_regex(node_value)
+        elif sre_constants.CATEGORY_NOT_DIGIT == node_value:  # \D
+            return _minus(_any_char(), _category_regex(sre_constants.CATEGORY_DIGIT))
+        elif sre_constants.CATEGORY_SPACE == node_value:  # \s
+            return _category_regex(node_value)
+        elif sre_constants.CATEGORY_NOT_SPACE == node_value:  # \S
+            return _minus(_any_char(), _category_regex(sre_constants.CATEGORY_SPACE))
+        elif sre_constants.CATEGORY_WORD == node_value:  # \w
+            return _category_regex(node_value)
+        elif sre_constants.CATEGORY_NOT_WORD == node_value:  # \W
+            return _minus(_any_char(), _category_regex(sre_constants.CATEGORY_WORD))
+        else:
+            raise NotImplementedError(
+                f"Regex category {node_value} not implemented"
+            )
+    
+    elif sre_constants.AT == node_type:
+        # Position anchors are not supported in Z3 regex
+        # Return empty regex as fallback (matches nothing specific)
+        raise NotImplementedError(
+            f"Regex position anchor {node_value} not implemented"
+        )
+    
+    else:
+        raise NotImplementedError(
+            f"Regex construct {regex_construct} not implemented"
+        )
+
+
+def _regex_to_z3_expr(regex: sre_parse.SubPattern):
+    """
+    Translates a parsed regex into its Z3 equivalent.
+    The parsed regex is a sequence of regex constructs (literals, *, +, etc.)
+    """
+    from z3 import Re, Concat
+    
+    if len(regex.data) == 0:
+        return Re("")
+    elif len(regex.data) == 1:
+        return _regex_construct_to_z3_expr(regex.data[0])
+    else:
+        return Concat(
+            [_regex_construct_to_z3_expr(construct) for construct in regex.data]
+        )
+
+
+def _pattern_to_z3_regex(pattern: str):
+    """
+    Convert a regex pattern string to Z3 regex.
+    
+    Args:
+        pattern: A Python regex pattern string
+        
+    Returns:
+        Z3 regex expression, or None if parsing fails
+    """
+    try:
+        parsed = sre_parse.parse(pattern)
+        return _regex_to_z3_expr(parsed)
+    except Exception:
+        return None
+
+
+# =============================================================================
+# Array Helpers
+# =============================================================================
+
+def _make_array_from_list(lst: list, ArrayWrapper):
+    """
+    Given a Python list and an ArrayWrapper type, return a Z3 array term
+    mapping indices 0..len(lst)-1 to the corresponding values.
+    """
+    from z3 import StringVal, IntVal, RealVal, BoolVal, K, Store, IntSort
+    
+    _init_z3_types()
+    
+    if ArrayWrapper == _ArrayWrapper_string:
+        default_val = StringVal("")
+        def convert(x): return StringVal(x)
+    elif ArrayWrapper == _ArrayWrapper_integer:
+        default_val = IntVal(0)
+        def convert(x): return IntVal(x)
+    elif ArrayWrapper == _ArrayWrapper_number:
+        default_val = RealVal(0)
+        def convert(x): return RealVal(x)
+    elif ArrayWrapper == _ArrayWrapper_boolean:
+        default_val = BoolVal(False)
+        def convert(x): return BoolVal(x)
+    elif ArrayWrapper == _ArrayWrapper_null:
+        default_val = _NullType.null
+        def convert(x): return _NullType.null
+    else:
+        raise NotImplementedError(f"Unknown ArrayWrapper type: {ArrayWrapper}")
+    
+    default_arr = K(IntSort(), default_val)
+    arr_term = default_arr
+    for i, elem in enumerate(lst):
+        arr_term = Store(arr_term, i, convert(elem))
+    return arr_term
+
+
+# =============================================================================
+# Constraint Building
+# =============================================================================
+
+def _build_constraints(var, schema: dict):
+    """
+    Recursively build Z3 constraints from a JSON Schema.
+    
+    Supported keywords include:
+      - "enum"
+      - "anyOf", "allOf", "oneOf"
+      - "not"
+      - "if", "then", "else"
+      - Type-specific keywords:
+            * string: {"pattern", "minLength", "maxLength"}
+            * number: {"multipleOf", "minimum", "exclusiveMinimum", "maximum", "exclusiveMaximum"}
+            * integer: {"multipleOf", "minimum", "exclusiveMinimum", "maximum", "exclusiveMaximum"}
+            * array: {"items", "minItems", "maxItems"}
+            * boolean, null
+    """
+    from z3 import (
+        And, Or, Not, Implies, If, Sum,
+        StringVal, IntVal, RealVal, BoolVal,
+        InRe, Length, Int, ForAll, Select,
+        StringSort, IntSort, RealSort, BoolSort,
+        Exists,
+    )
+    
+    _init_z3_types()
+    
+    constraint = True
+    
+    # Global enum constraint.
+    if "enum" in schema:
+        enums = schema["enum"]
+        if enums:
+            first = enums[0]
+            if isinstance(first, list):
+                # For arrays, convert each Python list to an ArrayWrapper instance.
+                enum_consts = []
+                ArrayWrapper = var.sort()
+                for arr in enums:
+                    arr_term = _make_array_from_list(arr, ArrayWrapper)
+                    array_value = ArrayWrapper.mkArrayWrapper(arr_term, len(arr))
+                    enum_consts.append(var == array_value)
+                constraint = And(constraint, Or(enum_consts))
+            elif isinstance(first, str):
+                constraint = And(constraint, Or([var == StringVal(e) for e in enums]))
+            elif isinstance(first, bool):
+                # Check bool before int since bool is subclass of int
+                constraint = And(constraint, Or([var == BoolVal(e) for e in enums]))
+            elif isinstance(first, int):
+                constraint = And(constraint, Or([var == IntVal(e) for e in enums]))
+            elif isinstance(first, float):
+                constraint = And(constraint, Or([var == RealVal(e) for e in enums]))
+            elif first is None:
+                constraint = And(constraint, var == _NullType.null)
+    
+    # anyOf: disjunction of subschemas.
+    if "anyOf" in schema:
+        branch_constraints = [_build_constraints(var, subschema) for subschema in schema["anyOf"]]
+        constraint = And(constraint, Or(branch_constraints))
+    
+    # allOf: all subschemas must hold.
+    if "allOf" in schema:
+        all_constraints = [_build_constraints(var, subschema) for subschema in schema["allOf"]]
+        constraint = And(constraint, And(all_constraints))
+    
+    # oneOf: exactly one subschema must hold.
+    if "oneOf" in schema:
+        oneof_constraints = [_build_constraints(var, subschema) for subschema in schema["oneOf"]]
+        constraint = And(constraint, Sum([If(c, 1, 0) for c in oneof_constraints]) == 1)
+    
+    # not: the subschema must not hold.
+    if "not" in schema:
+        constraint = And(constraint, Not(_build_constraints(var, schema["not"])))
+    
+    # if/then/else: conditional constraints.
+    if "if" in schema:
+        if_constraint = _build_constraints(var, schema["if"])
+        if "then" in schema:
+            then_constraint = _build_constraints(var, schema["then"])
+            constraint = And(constraint, Implies(if_constraint, then_constraint))
+        if "else" in schema:
+            else_constraint = _build_constraints(var, schema["else"])
+            constraint = And(constraint, Implies(Not(if_constraint), else_constraint))
+    
+    # Type check.
+    if "type" in schema:
+        t = schema["type"]
+        t_list = []
+        if isinstance(t, list):
+            t_list = t
+        else:
+            t_list.append(t)
+        type_constraint = []
+        for t in t_list:
+            if t == "string":
+                type_constraint.append(var.sort() == StringSort())
+            elif t == "array":
+                type_constraint.append(Or([var.sort() == aw for aw in _ARRAY_WRAPPERS]))
+            elif t == "integer":
+                type_constraint.append(var.sort() == IntSort())
+            elif t == "number":
+                type_constraint.append(var.sort() == RealSort())
+            elif t == "boolean":
+                type_constraint.append(var.sort() == BoolSort())
+            elif t == "null":
+                type_constraint.append(var.sort() == _NullType)
+        if type_constraint:
+            constraint = And(constraint, Or(type_constraint))
+    
+    # Type-specific constraints.
+    if var.sort() == StringSort():
+        if "pattern" in schema:
+            pat = schema["pattern"]
+            try:
+                regex = _pattern_to_z3_regex(pat)
+                if regex is not None:
+                    constraint = And(constraint, InRe(var, regex))
+            except Exception:
+                pass  # Skip unsupported patterns
+        if "minLength" in schema:
+            constraint = And(constraint, Length(var) >= schema["minLength"])
+        if "maxLength" in schema:
+            constraint = And(constraint, Length(var) <= schema["maxLength"])
+    
+    elif var.sort() in _ARRAY_WRAPPERS:
+        a_accessor, len_accessor = _ARRAY_WRAPPER_ACCESSORS[var.sort()]
+        constraint = And(constraint, len_accessor(var) >= 0)
+        if "minItems" in schema:
+            constraint = And(constraint, len_accessor(var) >= schema["minItems"])
+        if "maxItems" in schema:
+            constraint = And(constraint, len_accessor(var) <= schema["maxItems"])
+        if "items" in schema:
+            items_schema = schema["items"]
+            i = Int('i')
+            constraint = And(
+                constraint,
+                ForAll(
+                    i,
+                    Implies(
+                        And(i >= 0, i < len_accessor(var)),
+                        _build_constraints(Select(a_accessor(var), i), items_schema)
+                    )
+                )
+            )
+    
+    elif var.sort() == IntSort():
+        if "multipleOf" in schema:
+            m = schema["multipleOf"]
+            constraint = And(constraint, var % m == 0)
+        if "exclusiveMinimum" in schema:
+            constraint = And(constraint, var > schema["exclusiveMinimum"])
+        elif "minimum" in schema:
+            constraint = And(constraint, var >= schema["minimum"])
+        if "exclusiveMaximum" in schema:
+            constraint = And(constraint, var < schema["exclusiveMaximum"])
+        elif "maximum" in schema:
+            constraint = And(constraint, var <= schema["maximum"])
+    
+    elif var.sort() == RealSort():
+        if "multipleOf" in schema:
+            m = schema["multipleOf"]
+            k = Int('k_mult')
+            constraint = And(constraint, Exists(k, var == RealVal(m) * k))
+        if "exclusiveMinimum" in schema:
+            constraint = And(constraint, var > schema["exclusiveMinimum"])
+        elif "minimum" in schema:
+            constraint = And(constraint, var >= schema["minimum"])
+        if "exclusiveMaximum" in schema:
+            constraint = And(constraint, var < schema["exclusiveMaximum"])
+        elif "maximum" in schema:
+            constraint = And(constraint, var <= schema["maximum"])
+    
+    elif var.sort() == BoolSort():
+        pass  # No additional constraints for boolean
+    
+    elif var.sort() == _NullType:
+        constraint = And(constraint, var == _NullType.null)
+    
+    return constraint
+
+
+# =============================================================================
+# Schema Solving
+# =============================================================================
+
+def _solve_schema(schema: dict):
+    """
+    Given a JSON Schema (as a dict), determine if there is a value that satisfies it.
+    Chooses a top-level Z3 variable based on the schema's "type" or by inferring from an "enum".
+    
+    Returns:
+        A tuple (model, var) if satisfiable, or (None, var) if unsat.
+    """
+    from z3 import Solver, sat, String, Int, Real, Bool, Const
+    
+    _init_z3_types()
+    
+    var_list = []
+    
+    # Determine the top-level type.
+    if "type" in schema:
+        t = schema["type"]
+        t_list = t if isinstance(t, list) else [t]
+        
+        for t in t_list:
+            if t == "string":
+                var_list.append(String('x'))
+            elif t == "array":
+                # Choose an array wrapper based on the "items" type if provided.
+                if "items" in schema and "type" in schema["items"]:
+                    item_type = schema["items"]["type"]
+                    if item_type == "string":
+                        var_list.append(Const('x', _ArrayWrapper_string))
+                    elif item_type == "integer":
+                        var_list.append(Const('x', _ArrayWrapper_integer))
+                    elif item_type == "number":
+                        var_list.append(Const('x', _ArrayWrapper_number))
+                    elif item_type == "boolean":
+                        var_list.append(Const('x', _ArrayWrapper_boolean))
+                    elif item_type == "null":
+                        var_list.append(Const('x', _ArrayWrapper_null))
+                    else:
+                        for aw in _ARRAY_WRAPPERS:
+                            var_list.append(Const('x', aw))
+                else:
+                    for aw in _ARRAY_WRAPPERS:
+                        var_list.append(Const('x', aw))
+            elif t == "integer":
+                var_list.append(Int('x'))
+            elif t == "number":
+                var_list.append(Real('x'))
+            elif t == "boolean":
+                var_list.append(Bool('x'))
+            elif t == "null":
+                var_list.append(Const('x', _NullType))
+    else:
+        # Infer type from enum if provided.
+        if "enum" in schema and schema["enum"]:
+            first = schema["enum"][0]
+            if isinstance(first, list):
+                # Infer element type from first element of first array.
+                if len(first) > 0:
+                    sample = first[0]
+                    if isinstance(sample, str):
+                        var_list.append(Const('x', _ArrayWrapper_string))
+                    elif isinstance(sample, bool):
+                        var_list.append(Const('x', _ArrayWrapper_boolean))
+                    elif isinstance(sample, int):
+                        var_list.append(Const('x', _ArrayWrapper_integer))
+                    elif isinstance(sample, float):
+                        var_list.append(Const('x', _ArrayWrapper_number))
+                    elif sample is None:
+                        var_list.append(Const('x', _ArrayWrapper_null))
+                    else:
+                        for aw in _ARRAY_WRAPPERS:
+                            var_list.append(Const('x', aw))
+                else:
+                    for aw in _ARRAY_WRAPPERS:
+                        var_list.append(Const('x', aw))
+            elif isinstance(first, str):
+                var_list.append(String('x'))
+            elif isinstance(first, bool):
+                var_list.append(Bool('x'))
+            elif isinstance(first, int):
+                var_list.append(Int('x'))
+            elif isinstance(first, float):
+                var_list.append(Real('x'))
+            elif first is None:
+                var_list.append(Const('x', _NullType))
+        else:
+            # Try all types
+            var_list = [String('x'), Int('x'), Real('x'), Bool('x'), Const('x', _NullType)]
+            for aw in _ARRAY_WRAPPERS:
+                var_list.append(Const('x', aw))
+    
+    # Try each variable type
+    for var in var_list:
+        try:
+            cons = _build_constraints(var, schema)
+            s = Solver()
+            s.add(cons)
+            if s.check() == sat:
+                model = s.model()
+                return model, var
+        except Exception:
+            # If constraint building fails for this type, try next
+            continue
+    
+    # Return last var if none satisfied
+    return None, var_list[-1] if var_list else None
+
+
+# =============================================================================
+# Public API
+# =============================================================================
 
 def analyze_policies(policies: dict = None) -> list[str]:
     """
@@ -31,15 +642,7 @@ def analyze_policies(policies: dict = None) -> list[str]:
         ImportError: If z3-solver is not installed
     """
     try:
-        from z3 import (
-            Solver, sat, And, Or, Not, Implies, If, Sum,
-            String, Int, Real, Bool, Const,
-            StringVal, IntVal, RealVal, BoolVal,
-            InRe, Length, Re, Range, Star, Plus, Option, Concat, Union, Intersect,
-            Loop, Complement, ForAll, Exists, Select, Store, K,
-            IntSort, RealSort, BoolSort, StringSort, ArraySort,
-            Datatype,
-        )
+        from z3 import Solver, sat
     except ImportError:
         raise ImportError(
             "z3-solver is required for policy analysis. "
@@ -78,272 +681,47 @@ def analyze_policies(policies: dict = None) -> list[str]:
                         continue
                     
                     # Try to find overlap
-                    overlap = _check_schema_overlap(restriction_i, restriction_j)
-                    if overlap:
+                    schema = {
+                        "allOf": [restriction_i, restriction_j]
+                    }
+                    model, var = _solve_schema(schema)
+                    if model is not None:
+                        try:
+                            value = model[var]
+                        except Exception:
+                            value = "unknown"
                         warnings.append(
-                            f"Policy overlap in {tool_name}.{arg_name}: "
-                            f"rules {i} and {j} overlap. Example value: {overlap}"
+                            f"Policy Warning: {restriction_i} and {restriction_j} overlap. "
+                            f"Possible value: {value}."
                         )
     
     return warnings
 
 
-def _check_schema_overlap(schema_a: dict, schema_b: dict) -> Any:
+def check_schema_overlap(schema_a: dict, schema_b: dict) -> Any:
     """
     Check if two JSON schemas can be satisfied by the same value.
     
-    Returns an example value if overlap exists, None otherwise.
+    Args:
+        schema_a: First JSON schema
+        schema_b: Second JSON schema
+        
+    Returns:
+        An example value if overlap exists, None otherwise.
     """
-    try:
-        from z3 import Solver, sat, And, String, Int, Real, Bool
-    except ImportError:
-        return None
-    
-    # Create combined schema (allOf)
     combined = {
         "allOf": [schema_a, schema_b]
     }
     
-    # Try to solve
     model, var = _solve_schema(combined)
     
     if model is not None:
-        return model[var]
+        try:
+            return model[var]
+        except Exception:
+            return "unknown"
     
     return None
-
-
-def _solve_schema(schema: dict):
-    """
-    Solve a JSON schema to find a satisfying value.
-    
-    Returns (model, variable) if satisfiable, (None, variable) otherwise.
-    """
-    try:
-        from z3 import (
-            Solver, sat, And, Or, Not, Implies, If,
-            String, Int, Real, Bool, Const,
-            StringVal, IntVal, RealVal, BoolVal,
-            InRe, Length, Re, Range, Star, Plus, Option, Concat, Union,
-            Loop, ForAll, Exists, Select, Store, K,
-            IntSort, RealSort, BoolSort, StringSort, ArraySort,
-            Datatype,
-        )
-    except ImportError:
-        return None, None
-    
-    # Determine variable type from schema
-    var = _create_variable(schema)
-    
-    # Build constraints
-    constraints = _build_constraints(var, schema)
-    
-    # Solve
-    solver = Solver()
-    solver.add(constraints)
-    
-    if solver.check() == sat:
-        return solver.model(), var
-    
-    return None, var
-
-
-def _create_variable(schema: dict):
-    """Create appropriate Z3 variable based on schema type."""
-    from z3 import String, Int, Real, Bool, Const
-    
-    schema_type = schema.get("type", "string")
-    
-    if isinstance(schema_type, list):
-        # Multiple types - use first one
-        schema_type = schema_type[0]
-    
-    if schema_type == "string":
-        return String("x")
-    elif schema_type == "integer":
-        return Int("x")
-    elif schema_type == "number":
-        return Real("x")
-    elif schema_type == "boolean":
-        return Bool("x")
-    else:
-        return String("x")  # Default to string
-
-
-def _build_constraints(var, schema: dict):
-    """Build Z3 constraints from JSON schema."""
-    from z3 import (
-        And, Or, Not, Implies, If,
-        StringVal, IntVal, RealVal, BoolVal,
-        InRe, Length, Re, Range, Star, Plus, Option, Concat, Union,
-        StringSort, IntSort, RealSort, BoolSort,
-    )
-    import sre_parse
-    
-    constraints = []
-    
-    # enum constraint
-    if "enum" in schema:
-        enums = schema["enum"]
-        if enums:
-            first = enums[0]
-            if isinstance(first, str):
-                constraints.append(Or([var == StringVal(e) for e in enums]))
-            elif isinstance(first, int):
-                constraints.append(Or([var == IntVal(e) for e in enums]))
-            elif isinstance(first, float):
-                constraints.append(Or([var == RealVal(e) for e in enums]))
-            elif isinstance(first, bool):
-                constraints.append(Or([var == BoolVal(e) for e in enums]))
-    
-    # anyOf
-    if "anyOf" in schema:
-        branch_constraints = [_build_constraints(var, sub) for sub in schema["anyOf"]]
-        constraints.append(Or(branch_constraints))
-    
-    # allOf
-    if "allOf" in schema:
-        for sub in schema["allOf"]:
-            constraints.append(_build_constraints(var, sub))
-    
-    # oneOf
-    if "oneOf" in schema:
-        oneof = [_build_constraints(var, sub) for sub in schema["oneOf"]]
-        # Exactly one must be true
-        for i, c in enumerate(oneof):
-            others = oneof[:i] + oneof[i+1:]
-            constraints.append(Implies(c, And([Not(o) for o in others])))
-        constraints.append(Or(oneof))
-    
-    # not
-    if "not" in schema:
-        constraints.append(Not(_build_constraints(var, schema["not"])))
-    
-    # String constraints
-    if var.sort() == StringSort():
-        if "pattern" in schema:
-            try:
-                pattern = schema["pattern"]
-                regex = _pattern_to_z3_regex(pattern)
-                if regex is not None:
-                    constraints.append(InRe(var, regex))
-            except Exception:
-                pass  # Skip invalid patterns
-        
-        if "minLength" in schema:
-            constraints.append(Length(var) >= schema["minLength"])
-        
-        if "maxLength" in schema:
-            constraints.append(Length(var) <= schema["maxLength"])
-    
-    # Numeric constraints
-    if var.sort() in (IntSort(), RealSort()):
-        if "minimum" in schema:
-            constraints.append(var >= schema["minimum"])
-        
-        if "exclusiveMinimum" in schema:
-            constraints.append(var > schema["exclusiveMinimum"])
-        
-        if "maximum" in schema:
-            constraints.append(var <= schema["maximum"])
-        
-        if "exclusiveMaximum" in schema:
-            constraints.append(var < schema["exclusiveMaximum"])
-        
-        if "multipleOf" in schema and var.sort() == IntSort():
-            m = schema["multipleOf"]
-            constraints.append(var % m == 0)
-    
-    if constraints:
-        return And(constraints)
-    else:
-        return True  # No constraints
-
-
-def _pattern_to_z3_regex(pattern: str):
-    """Convert a regex pattern to Z3 regex."""
-    from z3 import Re, Range, Star, Plus, Option, Concat, Union
-    import sre_parse
-    import sre_constants
-    
-    try:
-        parsed = sre_parse.parse(pattern)
-    except Exception:
-        return None
-    
-    def convert_node(node_type, node_value):
-        if node_type == sre_constants.LITERAL:
-            return Re(chr(node_value))
-        elif node_type == sre_constants.ANY:
-            return Range(chr(0), chr(127))
-        elif node_type == sre_constants.MAX_REPEAT:
-            low, high, value = node_value
-            inner = convert_pattern(value)
-            if (low, high) == (0, 1):
-                return Option(inner)
-            elif (low, high) == (0, sre_constants.MAXREPEAT):
-                return Star(inner)
-            elif (low, high) == (1, sre_constants.MAXREPEAT):
-                return Plus(inner)
-            else:
-                # Bounded repeat - approximate with Loop if available
-                from z3 import Loop
-                return Loop(inner, low, high)
-        elif node_type == sre_constants.IN:
-            # Character class
-            options = []
-            for sub_type, sub_value in node_value:
-                if sub_type == sre_constants.RANGE:
-                    low, high = sub_value
-                    options.append(Range(chr(low), chr(high)))
-                elif sub_type == sre_constants.LITERAL:
-                    options.append(Re(chr(sub_value)))
-                elif sub_type == sre_constants.CATEGORY:
-                    if sub_value == sre_constants.CATEGORY_DIGIT:
-                        options.append(Range("0", "9"))
-                    elif sub_value == sre_constants.CATEGORY_WORD:
-                        options.append(Union(
-                            Range("a", "z"),
-                            Range("A", "Z"),
-                            Range("0", "9"),
-                            Re("_"),
-                        ))
-                    elif sub_value == sre_constants.CATEGORY_SPACE:
-                        options.append(Union(Re(" "), Re("\t"), Re("\n")))
-            if options:
-                return Union(*options) if len(options) > 1 else options[0]
-            return Re("")
-        elif node_type == sre_constants.SUBPATTERN:
-            _, _, _, value = node_value
-            return convert_pattern(value)
-        elif node_type == sre_constants.BRANCH:
-            _, branches = node_value
-            return Union(*[convert_pattern(b) for b in branches])
-        elif node_type == sre_constants.CATEGORY:
-            if node_value == sre_constants.CATEGORY_DIGIT:
-                return Range("0", "9")
-            elif node_value == sre_constants.CATEGORY_WORD:
-                return Union(
-                    Range("a", "z"),
-                    Range("A", "Z"),
-                    Range("0", "9"),
-                    Re("_"),
-                )
-            elif node_value == sre_constants.CATEGORY_SPACE:
-                return Union(Re(" "), Re("\t"), Re("\n"))
-        
-        # Fallback
-        return Re("")
-    
-    def convert_pattern(pattern):
-        if len(pattern.data) == 0:
-            return Re("")
-        elif len(pattern.data) == 1:
-            return convert_node(*pattern.data[0])
-        else:
-            return Concat(*[convert_node(*node) for node in pattern.data])
-    
-    return convert_pattern(parsed)
 
 
 def check_policy_type_errors(
@@ -394,3 +772,29 @@ def check_policy_type_errors(
                         warnings.append(f"{tool_name}.{arg_name}: {w}")
     
     return warnings
+
+
+# =============================================================================
+# Main (for testing)
+# =============================================================================
+
+if __name__ == "__main__":
+    # Test the analysis with sample policies
+    test_policies = {
+        "send_money": [
+            (1, 0, {"recipient": {"type": "string", "pattern": "UK12345678901234567890"}}, 0),
+            (2, 1, {"recipient": {"type": "string", "pattern": "SE3550000000054910000003"}}, 0),
+        ],
+        "send_email": [
+            (1, 0, {"recipient": {"type": "string", "pattern": "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}"}}, 0),
+            (2, 1, {"recipient": {"type": "string", "pattern": "agent@example.com"}}, 0),
+        ],
+        "update_items": [
+            (1, 0, {"items": {"type": "array", "items": {"type": "string"}, "minItems": 1}}, 0),
+            (2, 0, {"items": {"type": "array", "items": {"type": "string"}, "maxItems": 5}}, 0),
+        ]
+    }
+    
+    warnings = analyze_policies(test_policies)
+    for w in warnings:
+        print(w)
