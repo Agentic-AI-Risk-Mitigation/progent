@@ -29,8 +29,7 @@ implementations/sandbox/*
 # Binary files
 *.bin
 *.pkl
-
-*/logs/*
+*.log
 
 # ============================================
 # BENCHMARK FRAMEWORKS (not needed for MVP)

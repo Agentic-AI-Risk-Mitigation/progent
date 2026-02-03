@@ -5,25 +5,27 @@ Secure coding agent with policy enforcement via the `progent` library.
 ## Quick Start
 
 ```bash
-# 1. Create environment
+# 1. Create and activate environment
 conda create -n progent python=3.11 -y
 conda activate progent
 
-# 2. Install dependencies
+# 2. Install dependencies (from repo root)
 cd implementations
 pip install -r requirements.txt
 pip install -e ..  # Install progent library
 
-# 3. Set API key
+# 3. Set up API key
 cd examples/coding_agent
 cp env.template .env
 # Edit .env and add your OPENROUTER_API_KEY
 
-# 4. Run
+# 4. Run the agent
 python run_agent.py
 ```
 
 ## CLI Options
+
+Run from `implementations/examples/coding_agent/`:
 
 ```bash
 python run_agent.py                              # Default (LangChain + sandbox)
@@ -43,6 +45,8 @@ python run_agent.py --policies custom.json       # Custom policies file
 | `-c, --config` | Path to config YAML file |
 
 ## Configuration
+
+All config files are in `implementations/examples/coding_agent/`:
 
 **`config.yaml`** - LLM settings, system prompt, logging:
 ```yaml
@@ -68,44 +72,47 @@ OPENROUTER_API_KEY=sk-or-v1-xxx
 ## Repository Structure
 
 ```
-progent/                      # PROGENT SDK (pip-installable library)
-├── core.py                   # Policy enforcement engine
-├── policy.py                 # Policy loading/saving
-├── validation.py             # JSON Schema validation
-├── wrapper.py                # @secure decorator
-├── analysis.py               # Z3-based policy analysis (optional)
-├── generation.py             # LLM policy generation (optional)
+progent/                          # PROGENT SDK (pip-installable library)
+├── core.py                       # Policy enforcement engine
+├── policy.py                     # Policy loading/saving
+├── validation.py                 # JSON Schema validation
+├── wrapper.py                    # @secure decorator
+├── analysis.py                   # Z3-based policy analysis (optional)
+├── generation.py                 # LLM policy generation (optional) (not fully functional and not tested)
 └── adapters/
-    ├── langchain.py          # LangChain integration
-    └── mcp.py                # MCP middleware
+    ├── langchain.py              # LangChain integration
+    └── mcp.py                    # MCP middleware
 
-tests/                        # SDK tests
+tests/                            # SDK tests
 └── test_progent/
 
-implementations/              # AGENT IMPLEMENTATIONS
-├── core/                     # Shared infrastructure (stable)
-│   ├── tool_definitions.py   # All tools defined HERE (single source)
-│   ├── secured_executor.py   # Policy enforcement wrapper
-│   ├── progent_enforcer.py   # Progent integration
+implementations/                  # AGENT IMPLEMENTATIONS
+├── requirements.txt              # Python dependencies
+├── core/                         # Shared infrastructure (stable)
+│   ├── tool_definitions.py       # All tools defined HERE (single source)
+│   ├── secured_executor.py       # Policy enforcement wrapper
+│   ├── progent_enforcer.py       # Progent integration
 │   └── logging_utils.py
-├── frameworks/               # Agent adapters (stable)
-│   ├── base_agent.py         # Shared agent logic
-│   ├── langchain_agent.py    # LangChain adapter
-│   ├── adk_agent.py          # Google ADK adapter
-│   └── raw_sdk_agent.py      # OpenAI SDK adapter
-├── tools/                    # Tool implementations (stable)
+├── frameworks/                   # Agent adapters (stable)
+│   ├── base_agent.py             # Shared agent logic
+│   ├── langchain_agent.py        # LangChain adapter
+│   ├── adk_agent.py              # Google ADK adapter
+│   └── raw_sdk_agent.py          # OpenAI SDK adapter
+├── tools/                        # Tool implementations (stable)
 │   ├── file_tools.py
 │   ├── command_tools.py
 │   └── communication_tools.py
-└── examples/                 # EXAMPLES (freely editable)
-    └── coding_agent/         # Main example
-        ├── run_agent.py      # Entry point
-        ├── config.yaml       # Agent configuration
-        ├── policies.json     # Security policies
-        ├── sandbox/          # Workspace
-        └── logs/
+└── examples/                     # EXAMPLES (freely editable)
+    └── coding_agent/             # Main example
+        ├── run_agent.py          # Entry point
+        ├── config.yaml           # Agent configuration
+        ├── policies.json         # Security policies
+        ├── env.template          # API key template
+        ├── .env                  # API keys (create from template)
+        ├── sandbox/              # Default workspace
+        └── logs/                 # Agent logs
 
-secagent/                     # Original implementation (reference only)
+secagent/                         # Original implementation (reference only)
 ```
 
 ## What is `progent/`?
@@ -117,23 +124,6 @@ secagent/                     # Original implementation (reference only)
 - Optional analysis/generation modules
 
 It is built and distributed as a **pip-installable package** via `pyproject.toml`
-
-## Adding Tools
-
-Edit `implementations/core/tool_definitions.py`:
-
-```python
-ToolDefinition(
-    name="my_tool",
-    description="What it does",
-    parameters=[
-        ToolParameter(name="arg1", type="string", description="..."),
-    ],
-    handler=my_function,
-)
-```
-
-All frameworks automatically get the new tool.
 
 ## Creating New Examples
 
