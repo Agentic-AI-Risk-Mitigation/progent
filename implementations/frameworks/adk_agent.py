@@ -131,9 +131,7 @@ class ADKAgent(BaseAgent):
                     name=fc.name,
                     response={"result": result},
                 )
-                response = self.chat.send_message(
-                    types.Content(role="user", parts=[function_response_part])
-                )
+                response = self.chat.send_message(function_response_part)
 
             if response.text:
                 return response.text

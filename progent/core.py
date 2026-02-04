@@ -196,6 +196,8 @@ def _check_tool_call_impl(
     - effect=0 (allow): If all conditions pass, tool is allowed
     - effect=1 (deny): If all conditions match, tool is blocked
     """
+    failed_reasons = []
+
     for policy in policies:
         # Unpack policy tuple
         if len(policy) >= 4:
@@ -213,8 +215,9 @@ def _check_tool_call_impl(
                 # All conditions passed - tool is allowed
                 return
 
-            except PolicyValidationError:
-                # This allow rule doesn't match, try next rule
+            except PolicyValidationError as e:
+                # This allow rule doesn't match, record why and try next rule
+                failed_reasons.append(str(e))
                 continue
 
         elif effect == 1:  # Deny rule
@@ -232,10 +235,15 @@ def _check_tool_call_impl(
                 continue
 
     # No rule matched - block by default
+    if failed_reasons:
+        reason = f"Tool '{tool_name}' blocked: " + "; ".join(failed_reasons)
+    else:
+        reason = f"Tool '{tool_name}' blocked: no policy rule matched the provided arguments."
+
     raise ProgentBlockedError(
         tool_name=tool_name,
         arguments=kwargs,
-        reason=f"No matching policy rule for tool '{tool_name}'.",
+        reason=reason,
     )
 
 
