@@ -94,9 +94,7 @@ class SDKConfig:
     allowed_tools: list[str] = field(default_factory=list)
     mcp_servers: dict[str, dict] = field(default_factory=dict)
     can_use_tool: (
-        Callable[
-            [str, dict[str, Any], "_ToolPermissionContext"], Awaitable["PermissionResult"]
-        ]
+        Callable[[str, dict[str, Any], "_ToolPermissionContext"], Awaitable["PermissionResult"]]
         | None
     ) = None
 
@@ -139,9 +137,7 @@ class ClaudeSDKRunner:
                 """Dummy hook that returns continue=True to keep stream alive."""
                 return {"continue_": True}
 
-            opts.hooks = {
-                "PreToolUse": [HookMatcher(matcher=None, hooks=[_dummy_hook])]
-            }
+            opts.hooks = {"PreToolUse": [HookMatcher(matcher=None, hooks=[_dummy_hook])]}
             print("[PROGENT] Added dummy PreToolUse hook to keep stream open")
         return opts
 
@@ -236,12 +232,12 @@ class ClaudeSDKAgent(BaseAgent):
             )
 
         # DEBUG: Print immediately to verify this code is running
-        print("="*70, file=sys.stderr)
+        print("=" * 70, file=sys.stderr)
         print("[DEBUG] ClaudeSDKAgent.__init__() called", file=sys.stderr)
         print(f"[DEBUG]   policies_path = {policies_path!r}", file=sys.stderr)
         print(f"[DEBUG]   policies_path type = {type(policies_path)}", file=sys.stderr)
         print(f"[DEBUG]   policies_path bool = {bool(policies_path)}", file=sys.stderr)
-        print("="*70, file=sys.stderr)
+        print("=" * 70, file=sys.stderr)
         sys.stderr.flush()
 
         # Override model display — Claude Code manages its own model
@@ -262,7 +258,8 @@ class ClaudeSDKAgent(BaseAgent):
                 print(f"[PROGENT] Loading policies from: {policies_path}", file=sys.stderr)
                 sys.stderr.flush()
                 tool_defs = [
-                    {"name": t.name, "description": t.description, "args": {}} for t in TOOL_DEFINITIONS
+                    {"name": t.name, "description": t.description, "args": {}}
+                    for t in TOOL_DEFINITIONS
                 ]
                 init_progent(policies_path, tool_defs)
                 print("[PROGENT] Policies loaded successfully", file=sys.stderr)
@@ -270,6 +267,7 @@ class ClaudeSDKAgent(BaseAgent):
             except Exception as e:
                 print(f"[PROGENT] ERROR loading policies: {e}", file=sys.stderr)
                 import traceback
+
                 traceback.print_exc(file=sys.stderr)
                 sys.stderr.flush()
                 raise
