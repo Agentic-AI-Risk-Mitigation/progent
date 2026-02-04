@@ -34,6 +34,12 @@ jobs:
         run: uv sync --extra dev
       - name: Run tests
         run: uv run pytest tests/ -v --tb=short
+      - name: Run live agent integration test
+        if: env.OPENROUTER_API_KEY != ''
+        continue-on-error: true
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: uv run pytest tests/test_agent_integration.py -v --tb=short -k "LiveOpenRouter"
 
   test-with-z3:
     runs-on: ubuntu-latest
