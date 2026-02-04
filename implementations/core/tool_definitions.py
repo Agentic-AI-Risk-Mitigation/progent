@@ -7,20 +7,18 @@ to their specific formats (LangChain, ADK, OpenAI, etc.).
 DO NOT define tools in individual agent files.
 """
 
-from dataclasses import dataclass, field
-from typing import Callable, Any, Optional, Type
+from dataclasses import dataclass
+from typing import Any, Callable, Optional, Type
 
 from pydantic import BaseModel, Field, create_model
-
-from tools.file_tools import (
-    read_file,
-    write_file,
-    edit_file,
-    list_directory,
-)
 from tools.command_tools import run_command
 from tools.communication_tools import send_email
-
+from tools.file_tools import (
+    edit_file,
+    list_directory,
+    read_file,
+    write_file,
+)
 
 # Type mapping from JSON Schema types to Python types
 _TYPE_MAP = {
@@ -34,6 +32,7 @@ _TYPE_MAP = {
 @dataclass
 class ToolParameter:
     """Definition of a single tool parameter."""
+
     name: str
     type: str  # "string", "integer", "boolean", etc.
     description: str
@@ -45,23 +44,24 @@ class ToolParameter:
 class ToolDefinition:
     """
     Complete definition of a tool.
-    
+
     This is the single source of truth for:
     - Tool name
     - Description (shown to LLM)
     - Parameters (schema)
     - Handler function (actual implementation)
     """
+
     name: str
     description: str
     parameters: list[ToolParameter]
     handler: Callable
-    
+
     def to_json_schema(self) -> dict:
         """Convert parameters to JSON Schema format (used by most frameworks)."""
         properties = {}
         required = []
-        
+
         for param in self.parameters:
             properties[param.name] = {
                 "type": param.type,
@@ -69,35 +69,32 @@ class ToolDefinition:
             }
             if param.required:
                 required.append(param.name)
-        
+
         return {
             "type": "object",
             "properties": properties,
             "required": required,
         }
-    
+
     def to_pydantic_model(self) -> Type[BaseModel]:
         """
         Create a Pydantic model for this tool's parameters.
-        
+
         Used by LangChain's StructuredTool for proper schema inference.
         """
         fields = {}
-        
+
         for param in self.parameters:
             python_type = _TYPE_MAP.get(param.type, str)
-            
+
             if param.required:
-                fields[param.name] = (
-                    python_type,
-                    Field(description=param.description)
-                )
+                fields[param.name] = (python_type, Field(description=param.description))
             else:
                 fields[param.name] = (
                     Optional[python_type],
-                    Field(default=param.default, description=param.description)
+                    Field(default=param.default, description=param.description),
                 )
-        
+
         # Create model with tool name
         model_name = f"{self.name.title().replace('_', '')}Args"
         return create_model(model_name, **fields)
@@ -123,7 +120,6 @@ TOOL_DEFINITIONS: list[ToolDefinition] = [
         ],
         handler=read_file,
     ),
-    
     ToolDefinition(
         name="write_file",
         description=(
@@ -144,7 +140,6 @@ TOOL_DEFINITIONS: list[ToolDefinition] = [
         ],
         handler=write_file,
     ),
-    
     ToolDefinition(
         name="edit_file",
         description=(
@@ -170,7 +165,6 @@ TOOL_DEFINITIONS: list[ToolDefinition] = [
         ],
         handler=edit_file,
     ),
-    
     ToolDefinition(
         name="list_directory",
         description="List the contents of a directory.",
@@ -185,7 +179,6 @@ TOOL_DEFINITIONS: list[ToolDefinition] = [
         ],
         handler=list_directory,
     ),
-    
     ToolDefinition(
         name="run_command",
         description=(
@@ -202,7 +195,6 @@ TOOL_DEFINITIONS: list[ToolDefinition] = [
         ],
         handler=run_command,
     ),
-    
     ToolDefinition(
         name="send_email",
         description="Send an email notification (simulated).",

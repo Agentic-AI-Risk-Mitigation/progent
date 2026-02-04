@@ -4,11 +4,12 @@ Progent validation utilities.
 Handles JSON Schema validation and other restriction types.
 """
 
-import re
 import inspect
-from typing import Callable, Any
+import re
+from typing import Any, Callable
 
-from jsonschema import validate, ValidationError as JsonSchemaValidationError
+from jsonschema import ValidationError as JsonSchemaValidationError
+from jsonschema import validate
 
 from progent.exceptions import PolicyValidationError
 
@@ -20,17 +21,17 @@ def check_argument(
 ) -> None:
     """
     Validate a single argument against a restriction.
-    
+
     Supports multiple restriction types:
     - dict: JSON Schema validation
     - str: Regex pattern matching
     - callable: Custom validation function
-    
+
     Args:
         arg_name: Name of the argument being checked
         value: The value to validate
         restriction: The restriction to validate against
-        
+
     Raises:
         PolicyValidationError: If validation fails
     """
@@ -45,7 +46,7 @@ def check_argument(
                 restriction=restriction,
                 message=f"Invalid value for argument '{arg_name}': {e.message}",
             )
-    
+
     elif isinstance(restriction, str):
         # Regex pattern matching
         if not isinstance(value, str):
@@ -65,7 +66,7 @@ def check_argument(
                     f"value '{value}' does not match pattern '{restriction}'"
                 ),
             )
-    
+
     elif isinstance(restriction, Callable):
         # Custom validation function
         try:
@@ -90,7 +91,7 @@ def check_argument(
                 restriction=restriction,
                 message=f"Validation error for '{arg_name}': {e}",
             )
-    
+
     else:
         raise PolicyValidationError(
             argument_name=arg_name,
@@ -103,22 +104,22 @@ def check_argument(
 def validate_schema(schema: dict) -> list[str]:
     """
     Validate a JSON Schema for correctness.
-    
+
     Returns a list of warning messages if there are issues.
     """
     from jsonschema.validators import validator_for
-    
+
     warnings = []
-    
+
     try:
         validator = validator_for(schema)
         validator.check_schema(schema)
     except Exception as e:
         warnings.append(f"Invalid JSON Schema: {e}")
-    
+
     # Check for type-specific keyword misuse
     warnings.extend(_check_type_specific_keywords(schema))
-    
+
     return warnings
 
 
@@ -143,13 +144,13 @@ def _check_type_specific_keywords(schema: dict, path: str = "") -> list[str]:
     Recursively check a JSON Schema for invalid type-specific keyword usage.
     """
     warnings = []
-    
+
     if not isinstance(schema, dict):
         return warnings
-    
+
     if "type" in schema:
         types = schema["type"]
-        
+
         # Determine allowed keywords
         if isinstance(types, list):
             allowed = set()
@@ -159,37 +160,27 @@ def _check_type_specific_keywords(schema: dict, path: str = "") -> list[str]:
             allowed = _ALLOWED_KEYWORDS_BY_TYPE.get(types, set())
         else:
             allowed = set()
-        
+
         # Check each key
         for key in schema:
             if key in _ALL_TYPE_SPECIFIC_KEYWORDS and key not in allowed:
-                warnings.append(
-                    f"Warning at {path}: '{key}' is not valid for type '{types}'"
-                )
-    
+                warnings.append(f"Warning at {path}: '{key}' is not valid for type '{types}'")
+
     # Recursively check nested schemas
     for k, v in schema.items():
         if k in ["anyOf", "allOf", "oneOf"]:
             if isinstance(v, list):
                 for i, item in enumerate(v):
-                    warnings.extend(
-                        _check_type_specific_keywords(item, f"{path}.{k}[{i}]")
-                    )
+                    warnings.extend(_check_type_specific_keywords(item, f"{path}.{k}[{i}]"))
         elif k in ["not", "if", "then", "else"]:
             if isinstance(v, dict):
-                warnings.extend(
-                    _check_type_specific_keywords(v, f"{path}.{k}")
-                )
+                warnings.extend(_check_type_specific_keywords(v, f"{path}.{k}"))
         elif k == "items":
             if isinstance(v, dict):
-                warnings.extend(
-                    _check_type_specific_keywords(v, f"{path}.items")
-                )
+                warnings.extend(_check_type_specific_keywords(v, f"{path}.items"))
             elif isinstance(v, list):
                 for i, item in enumerate(v):
-                    warnings.extend(
-                        _check_type_specific_keywords(item, f"{path}.items[{i}]")
-                    )
+                    warnings.extend(_check_type_specific_keywords(item, f"{path}.items[{i}]"))
         elif k == "properties":
             if isinstance(v, dict):
                 for prop_name, prop_schema in v.items():
@@ -199,5 +190,5 @@ def _check_type_specific_keywords(schema: dict, path: str = "") -> list[str]:
                                 prop_schema, f"{path}.properties.{prop_name}"
                             )
                         )
-    
+
     return warnings

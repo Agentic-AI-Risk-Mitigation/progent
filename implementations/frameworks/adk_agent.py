@@ -22,14 +22,15 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 try:
     from google import genai
     from google.genai import types
+
     ADK_AVAILABLE = True
 except ImportError:
     ADK_AVAILABLE = False
 
-from frameworks.base_agent import BaseAgent
 from core.progent_enforcer import init_progent
-from core.tool_definitions import TOOL_DEFINITIONS, ToolDefinition
 from core.secured_executor import create_secured_handler
+from core.tool_definitions import TOOL_DEFINITIONS
+from frameworks.base_agent import BaseAgent
 
 
 class ADKAgent(BaseAgent):
@@ -47,8 +48,7 @@ class ADKAgent(BaseAgent):
     ):
         if not ADK_AVAILABLE:
             raise ImportError(
-                "Google Gen AI SDK not installed. "
-                "Install with: pip install google-genai"
+                "Google Gen AI SDK not installed. " "Install with: pip install google-genai"
             )
 
         super().__init__(config, workspace)
@@ -71,8 +71,7 @@ class ADKAgent(BaseAgent):
         # Initialize Progent policies
         if policies_path:
             tool_defs = [
-                {"name": t.name, "description": t.description, "args": {}}
-                for t in TOOL_DEFINITIONS
+                {"name": t.name, "description": t.description, "args": {}} for t in TOOL_DEFINITIONS
             ]
             init_progent(policies_path, tool_defs)
 
@@ -92,21 +91,20 @@ class ADKAgent(BaseAgent):
 
     def _create_handlers(self) -> dict[str, Any]:
         """Create secured handlers for all tools."""
-        return {
-            tool_def.name: create_secured_handler(tool_def)
-            for tool_def in TOOL_DEFINITIONS
-        }
+        return {tool_def.name: create_secured_handler(tool_def) for tool_def in TOOL_DEFINITIONS}
 
     def _create_tools(self) -> list[types.Tool]:
         """Convert unified tool definitions to Gemini FunctionDeclaration format."""
         declarations = []
 
         for tool_def in TOOL_DEFINITIONS:
-            declarations.append({
-                "name": tool_def.name,
-                "description": tool_def.description,
-                "parameters": tool_def.to_json_schema(),
-            })
+            declarations.append(
+                {
+                    "name": tool_def.name,
+                    "description": tool_def.description,
+                    "parameters": tool_def.to_json_schema(),
+                }
+            )
 
         return [types.Tool(function_declarations=declarations)]
 
