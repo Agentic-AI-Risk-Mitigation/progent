@@ -28,6 +28,9 @@ from core.progent_enforcer import init_progent
 from core.tool_definitions import TOOL_DEFINITIONS, ToolDefinition
 from core.secured_executor import create_secured_handler
 
+from dotenv import load_dotenv
+load_dotenv()
+
 
 class LangChainAgent(BaseAgent):
     """

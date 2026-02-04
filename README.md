@@ -4,6 +4,19 @@ Secure coding agent with policy enforcement via the `progent` library.
 
 ## Quick Start
 
+### UV approach(RECOMMENDED)
+
+```bash
+# 1. Activates the environment and installs all packages
+uv sync
+
+# 2. Add OPENROUTER_API_KEY to your .env
+
+# 3. Run the agent
+cd implementations/examples/coding_agent
+uv run run_agent.py
+```
+
 ```bash
 # 1. Create and activate environment
 conda create -n progent python=3.11 -y
