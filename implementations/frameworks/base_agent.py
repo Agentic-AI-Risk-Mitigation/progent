@@ -107,7 +107,7 @@ class BaseAgent(ABC):
                 
                 # Log and display response
                 self.logger.assistant_response(response)
-                print(f"\nAssistant: {response}\n")
+                print(f"\n\nAssistant: {response}\n")
                 
             except KeyboardInterrupt:
                 print("\n\nInterrupted. Type 'exit' to quit.")
