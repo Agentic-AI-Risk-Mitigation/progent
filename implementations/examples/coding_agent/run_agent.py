@@ -53,7 +53,7 @@ def main():
         "--framework",
         "-f",
         type=str,
-        choices=["langchain", "adk", "raw_sdk"],
+        choices=["langchain", "adk", "raw_sdk", "claude_sdk"],
         default=None,
         help="Agent framework to use (default: from config)",
     )
@@ -166,6 +166,14 @@ def main():
             from frameworks.raw_sdk_agent import RawSDKAgent
 
             agent = RawSDKAgent(
+                config=config,
+                workspace=workspace,
+                policies_path=args.policies,
+            )
+        elif framework == "claude_sdk":
+            from frameworks.claude_sdk_agent import ClaudeSDKAgent
+
+            agent = ClaudeSDKAgent(
                 config=config,
                 workspace=workspace,
                 policies_path=args.policies,

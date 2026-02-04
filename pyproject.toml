@@ -62,9 +62,14 @@ adk = [
     "google-genai>=1.61.0",
 ]
 
+# Claude Agent SDK integration
+claude-sdk = [
+    "claude-agent-sdk>=0.1.29",
+]
+
 # All optional dependencies
 all = [
-    "progent[analysis,generation,langchain,mcp,adk]",
+    "progent[analysis,generation,langchain,mcp,adk,claude-sdk]",
 ]
 
 # Development dependencies
