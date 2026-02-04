@@ -57,9 +57,14 @@ mcp = [
     "fastmcp>=0.1",
 ]
 
+# Google ADK (Gemini) integration
+adk = [
+    "google-genai>=1.61.0",
+]
+
 # All optional dependencies
 all = [
-    "progent[analysis,generation,langchain,mcp]",
+    "progent[analysis,generation,langchain,mcp,adk]",
 ]
 
 # Development dependencies
