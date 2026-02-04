@@ -7,7 +7,7 @@ on all tool calls.
 Usage:
     from progent.adapters.mcp import ProgentMiddleware
     from fastmcp import FastMCP
-    
+
     server = FastMCP(name="My Server")
     server.add_middleware(ProgentMiddleware())
 """
@@ -21,23 +21,23 @@ from progent.exceptions import ProgentBlockedError
 class ProgentMiddleware:
     """
     MCP middleware that enforces Progent policies on tool calls.
-    
+
     This middleware intercepts all tool calls through an MCP server
     and validates them against the configured security policies.
-    
+
     Usage with FastMCP:
         from fastmcp import FastMCP
         from progent import load_policies
         from progent.adapters.mcp import ProgentMiddleware
-        
+
         # Load policies
         load_policies("policies.json")
-        
+
         # Create server with middleware
         server = FastMCP(name="Secured Server")
         server.add_middleware(ProgentMiddleware())
     """
-    
+
     def __init__(
         self,
         on_blocked: Callable[[str, dict, str], Any] = None,
@@ -45,7 +45,7 @@ class ProgentMiddleware:
     ):
         """
         Initialize the middleware.
-        
+
         Args:
             on_blocked: Optional callback when a tool is blocked.
                        Called with (tool_name, arguments, reason).
@@ -53,38 +53,38 @@ class ProgentMiddleware:
         """
         self.on_blocked = on_blocked
         self.log_calls = log_calls
-    
+
     async def on_call_tool(self, context, call_next):
         """
         Middleware hook for tool calls.
-        
+
         This method is called by FastMCP for each tool invocation.
         """
         # Extract tool info from context
         tool_name = context.message.name
         tool_kwargs = context.message.arguments or {}
-        
+
         if self.log_calls:
             print(f"[Progent/MCP] Tool call: {tool_name}({tool_kwargs})")
-        
+
         # Check policy
         try:
             check_tool_call(tool_name, tool_kwargs)
         except ProgentBlockedError as e:
             reason = str(e)
-            
+
             if self.log_calls:
                 print(f"[Progent/MCP] BLOCKED: {reason}")
-            
+
             if self.on_blocked:
                 self.on_blocked(tool_name, tool_kwargs, reason)
-            
+
             # Re-raise to block the call
             raise
-        
+
         if self.log_calls:
             print(f"[Progent/MCP] ALLOWED: {tool_name}")
-        
+
         # Continue to actual tool execution
         result = await call_next(context)
         return result
@@ -98,16 +98,16 @@ def create_secured_mcp_server(
 ):
     """
     Create an MCP server with Progent security enabled.
-    
+
     This is a convenience function that creates a FastMCP server
     with the Progent middleware already configured.
-    
+
     Args:
         proxy_url: Optional URL to proxy requests to
         name: Server name
         policies: Policies dict (mutually exclusive with policies_file)
         policies_file: Path to policies JSON file
-        
+
     Returns:
         Configured FastMCP server instance
     """
@@ -116,18 +116,19 @@ def create_secured_mcp_server(
         from fastmcp.server.proxy import ProxyClient
     except ImportError:
         raise ImportError(
-            "fastmcp is required for MCP integration. "
-            "Install with: pip install fastmcp"
+            "fastmcp is required for MCP integration. Install with: pip install fastmcp"
         )
-    
+
     # Load policies
     if policies_file:
         from progent import load_policies
+
         load_policies(policies_file)
     elif policies:
         from progent import load_policies
+
         load_policies(policies)
-    
+
     # Create server
     if proxy_url:
         server = FastMCP.as_proxy(
@@ -136,10 +137,10 @@ def create_secured_mcp_server(
         )
     else:
         server = FastMCP(name=name)
-    
+
     # Add middleware
     server.add_middleware(ProgentMiddleware())
-    
+
     return server
 
 
@@ -151,10 +152,10 @@ def run_secured_mcp_proxy(
 ):
     """
     Run a secured MCP proxy server.
-    
+
     This creates and runs an MCP proxy server that forwards requests
     to another MCP server while enforcing Progent security policies.
-    
+
     Args:
         proxy_url: URL of the upstream MCP server
         policies_file: Path to policies JSON file
@@ -165,7 +166,7 @@ def run_secured_mcp_proxy(
         proxy_url=proxy_url,
         policies_file=policies_file,
     )
-    
+
     server.run(
         transport="http",
         host=host,

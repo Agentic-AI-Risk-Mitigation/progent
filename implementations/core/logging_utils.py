@@ -57,10 +57,14 @@ class AgentLogger:
         json_str = json.dumps({"name": tool_name, "arguments": arguments}, indent=None)
         self.logger.info(f"LLM_TOOL_CALL: {json_str}")
 
-    def progent_decision(self, tool_name: str, arguments: dict[str, Any], allowed: bool, reason: str = "") -> None:
+    def progent_decision(
+        self, tool_name: str, arguments: dict[str, Any], allowed: bool, reason: str = ""
+    ) -> None:
         """Log Progent policy decision."""
         status = "ALLOWED" if allowed else "BLOCKED"
-        args_str = ", ".join(f'{k}="{v}"' if isinstance(v, str) else f"{k}={v}" for k, v in arguments.items())
+        args_str = ", ".join(
+            f'{k}="{v}"' if isinstance(v, str) else f"{k}={v}" for k, v in arguments.items()
+        )
         msg = f"PROGENT: {status} - {tool_name}({args_str})"
         if reason and not allowed:
             msg += f" | Reason: {reason}"
@@ -101,7 +105,9 @@ def get_logger() -> AgentLogger:
     return _logger
 
 
-def init_logger(log_dir: str = "./logs", level: str = "INFO", session_name: Optional[str] = None) -> AgentLogger:
+def init_logger(
+    log_dir: str = "./logs", level: str = "INFO", session_name: Optional[str] = None
+) -> AgentLogger:
     """Initialize the global logger with custom settings."""
     global _logger
     _logger = AgentLogger(log_dir=log_dir, level=level, session_name=session_name)

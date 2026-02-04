@@ -57,9 +57,19 @@ mcp = [
     "fastmcp>=0.1",
 ]
 
+# Google ADK (Gemini) integration
+adk = [
+    "google-genai>=1.61.0",
+]
+
+# Claude Agent SDK integration
+claude-sdk = [
+    "claude-agent-sdk>=0.1.29",
+]
+
 # All optional dependencies
 all = [
-    "progent[analysis,generation,langchain,mcp]",
+    "progent[analysis,generation,langchain,mcp,adk,claude-sdk]",
 ]
 
 # Development dependencies
@@ -93,6 +103,7 @@ asyncio_mode = "auto"
 [tool.ruff]
 line-length = 100
 target-version = "py39"
+exclude = ["secagent/"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I"]
