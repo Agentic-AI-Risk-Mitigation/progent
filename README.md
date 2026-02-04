@@ -7,8 +7,14 @@ Secure coding agent with policy enforcement via the `progent` library.
 ### UV approach(RECOMMENDED)
 
 ```bash
-# 1. Activates the environment and installs all packages
+# 1. Install core dependencies
 uv sync
+
+# 1b. Install optional framework extras as needed
+uv sync --extra adk            # Google ADK (Gemini)
+uv sync --extra claude-sdk     # Claude Agent SDK
+uv sync --extra analysis       # Z3 policy analysis
+uv sync --extra all            # Everything
 
 # 2. Add OPENROUTER_API_KEY to your .env
 
@@ -67,7 +73,8 @@ implementations/                  # AGENT IMPLEMENTATIONS
 │   ├── base_agent.py             # Shared agent logic
 │   ├── langchain_agent.py        # LangChain adapter
 │   ├── adk_agent.py              # Google ADK adapter
-│   └── raw_sdk_agent.py          # OpenAI SDK adapter
+│   ├── raw_sdk_agent.py          # OpenAI SDK adapter
+│   └── claude_sdk_agent.py      # Claude Agent SDK adapter
 ├── tools/                        # Tool implementations (stable)
 │   ├── file_tools.py
 │   ├── command_tools.py
@@ -115,17 +122,20 @@ python run_agent.py                              # Default (LangChain + sandbox)
 python run_agent.py --workspace ./my_project     # Custom workspace
 python run_agent.py --framework adk              # Use Google ADK
 python run_agent.py --framework raw_sdk          # Use raw OpenAI SDK
+python run_agent.py --framework claude_sdk       # Use Claude Agent SDK
 python run_agent.py --model anthropic/claude-3.5-sonnet  # Different model
 python run_agent.py --policies custom.json       # Custom policies file
+python run_agent.py --api-base https://api.openai.com/v1  # Use OpenAI directly
 ```
 
 | Flag | Description |
 |------|-------------|
 | `-w, --workspace` | Working directory for the agent |
-| `-f, --framework` | `langchain`, `adk`, or `raw_sdk` |
+| `-f, --framework` | `langchain`, `adk`, `raw_sdk`, or `claude_sdk` |
 | `-m, --model` | LLM model (OpenRouter format) |
 | `-p, --policies` | Path to policies JSON file |
 | `-c, --config` | Path to config YAML file |
+| `--api-base` | API base URL override |
 
 
 ## REPL Commands
@@ -144,7 +154,7 @@ All config files are in `implementations/examples/coding_agent/`:
 **`config.yaml`** - LLM settings, system prompt, logging:
 ```yaml
 llm:
-  model: meta-llama/llama-3.1-70b-instruct
+  model: deepseek/deepseek-v3.2
   api_base: https://openrouter.ai/api/v1
 ```
 

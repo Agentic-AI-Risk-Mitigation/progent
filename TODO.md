@@ -21,7 +21,7 @@
 
 ## Missing Tests
 
-- [ ] Integration tests for full agent loop (user prompt → tool call → policy check → result)
+- [x] Integration tests for full agent loop (user prompt → tool call → policy check → result)
 - [ ] Tests for `progent/generation.py`
 - [ ] Tests for `progent/adapters/mcp.py` with real MCP server
 - [ ] Tests for `progent/adapters/langchain.py`
@@ -37,5 +37,5 @@
 
 - [ ] `implementations/core/progent_enforcer.py` duplicates some logic from `progent/core.py`
 - [ ] Logging is scattered - could be centralized
-- [ ] No CI/CD pipeline for running tests
+- [x] No CI/CD pipeline for running tests (`.github/workflows/ci.yml`)
 
