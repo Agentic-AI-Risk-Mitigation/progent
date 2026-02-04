@@ -137,7 +137,7 @@ def _api_request(
         from openai import OpenAI
     except ImportError:
         raise ImportError(
-            "openai is required for OpenAI models. " "Install with: pip install progent[generation]"
+            "openai is required for OpenAI models. Install with: pip install progent[generation]"
         )
 
     # Local models via vLLM
@@ -221,7 +221,7 @@ def generate_policies(
 
             if manual_confirm:
                 print(
-                    f"Generated policy: {json.dumps(generated, indent=2)}\n" "Apply? [y/N]: ",
+                    f"Generated policy: {json.dumps(generated, indent=2)}\nApply? [y/N]: ",
                     end="",
                     flush=True,
                 )
@@ -305,7 +305,7 @@ def update_policies_from_result(
 
             if manual_confirm:
                 print(
-                    f"Updated policy: {json.dumps(generated, indent=2)}\n" "Apply? [y/N]: ",
+                    f"Updated policy: {json.dumps(generated, indent=2)}\nApply? [y/N]: ",
                     end="",
                     flush=True,
                 )

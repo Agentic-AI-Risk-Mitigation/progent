@@ -141,7 +141,7 @@ class LangChainAgent(BaseAgent):
 
             # Log intermediate steps
             for i, (action, observation) in enumerate(result.get("intermediate_steps", [])):
-                self.logger.info(f"Step {i+1}: {action.tool}({action.tool_input})")
+                self.logger.info(f"Step {i + 1}: {action.tool}({action.tool_input})")
 
             # Update chat history
             self.chat_history.append(HumanMessage(content=user_input))

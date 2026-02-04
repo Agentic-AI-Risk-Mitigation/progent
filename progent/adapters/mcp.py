@@ -116,7 +116,7 @@ def create_secured_mcp_server(
         from fastmcp.server.proxy import ProxyClient
     except ImportError:
         raise ImportError(
-            "fastmcp is required for MCP integration. " "Install with: pip install fastmcp"
+            "fastmcp is required for MCP integration. Install with: pip install fastmcp"
         )
 
     # Load policies

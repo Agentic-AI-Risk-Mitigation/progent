@@ -262,7 +262,7 @@ def _handle_block(
         sys.exit(1)
     elif fallback == 2:  # Ask user
         print(
-            f"[Progent] Agent wants to call {tool_name} with args {kwargs}. " f"Allow? [y/N]: ",
+            f"[Progent] Agent wants to call {tool_name} with args {kwargs}. Allow? [y/N]: ",
             end="",
             flush=True,
         )

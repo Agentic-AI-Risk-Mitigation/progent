@@ -22,12 +22,12 @@ def send_email(to: str, subject: str, body: str) -> str:
     logger.debug(f"EMAIL BODY: {body}")
 
     # Also print to console for visibility during testing
-    print(f"\n{'='*50}")
+    print(f"\n{'=' * 50}")
     print("EMAIL SENT (DUMMY)")
-    print(f"{'='*50}")
+    print(f"{'=' * 50}")
     print(f"To: {to}")
     print(f"Subject: {subject}")
     print(f"Body:\n{body}")
-    print(f"{'='*50}\n")
+    print(f"{'=' * 50}\n")
 
     return f"Email sent successfully to {to} with subject '{subject}'"

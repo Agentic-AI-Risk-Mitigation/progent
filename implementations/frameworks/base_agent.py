@@ -60,18 +60,18 @@ class BaseAgent(ABC):
 
         This is a shared implementation that works for all framework adapters.
         """
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("Progent Coding Agent")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"Workspace: {self.workspace}")
         print(f"Framework: {self.__class__.__name__}")
         print(f"Model: {self.config.get('llm', {}).get('model', 'unknown')}")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print("Commands:")
         print("  exit/quit  - End the session")
         print("  clear      - Clear conversation history")
         print("  verbose    - Toggle verbose tool output")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         verbose_mode = True  # Show tool calls by default
 

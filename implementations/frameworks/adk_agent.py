@@ -48,7 +48,7 @@ class ADKAgent(BaseAgent):
     ):
         if not ADK_AVAILABLE:
             raise ImportError(
-                "Google Gen AI SDK not installed. " "Install with: pip install google-genai"
+                "Google Gen AI SDK not installed. Install with: pip install google-genai"
             )
 
         super().__init__(config, workspace)

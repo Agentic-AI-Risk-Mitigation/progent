@@ -311,11 +311,11 @@ class ClaudeSDKAgent(BaseAgent):
         Translates Claude Code tool names/args to Progent equivalents,
         then calls enforce_policy(). Returns SDK-compatible PermissionResult.
         """
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("[PROGENT] can_use_tool INVOKED!")
         print(f"[PROGENT]   tool: {tool_name}")
         print(f"[PROGENT]   input: {input_data}")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         mapping = CLAUDE_TO_PROGENT_MAP.get(tool_name)
         if mapping is None:
