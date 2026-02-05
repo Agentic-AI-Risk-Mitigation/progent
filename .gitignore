@@ -37,7 +37,7 @@ implementations/sandbox/*
 # ============================================
 
 # AgentDojo benchmark
-agentdojo/
+
 
 # ASB (Agent Security Benchmark)
 asb/
