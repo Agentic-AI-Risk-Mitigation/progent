@@ -1,0 +1,164 @@
+{
+  "name": "Progent SKILL.md Injection Attack Dataset",
+  "version": "1.0.0",
+  "description": "A structured dataset of adversarial SKILL.md injection attack payloads and realistic malicious skill file specimens for defensive security research. Contains 103 tool-call payloads across 10 attack classes, a reference hardened policy, and 100 social-engineering SKILL.md specimens.",
+  "license": "MIT",
+  "purpose": "Defensive security research, policy testing, and LLM agent safety evaluation",
+  "references": [
+    {
+      "name": "Snyk ToxicSkills Audit",
+      "description": "Security audit of SKILL.md injection risks in LLM coding agents"
+    },
+    {
+      "name": "Progent Paper",
+      "description": "Programmable Privilege Control for LLM Agents"
+    }
+  ],
+  "statistics": {
+    "attack_classes": 10,
+    "total_payloads": 103,
+    "malicious_payloads": 67,
+    "benign_payloads": 36,
+    "skill_file_specimens": 100,
+    "tools_covered": ["run_command", "read_file", "write_file", "edit_file", "send_email", "list_directory"]
+  },
+  "files": {
+    "taxonomy": "taxonomy.json",
+    "hardened_policy": "hardened_policy.json",
+    "schema": "schema/attack_payload.schema.json",
+    "payloads": [
+      "payloads/01_silent_data_exfiltration.json",
+      "payloads/02_command_injection_code_blocks.json",
+      "payloads/03_obfuscated_payloads.json",
+      "payloads/04_bundled_artifact_trojan_horse.json",
+      "payloads/05_memory_persistence_poisoning.json",
+      "payloads/06_supply_chain_dependency_poisoning.json",
+      "payloads/07_permission_escalation_approval_carryover.json",
+      "payloads/08_cross_origin_context_poisoning.json",
+      "payloads/09_security_control_disablement.json",
+      "payloads/10_credential_harvesting.json"
+    ],
+    "skill_files": {
+      "01_silent_data_exfiltration": [
+        "skill_files/01_silent_data_exfiltration/env_setup_helper.md",
+        "skill_files/01_silent_data_exfiltration/cloud_config_sync.md",
+        "skill_files/01_silent_data_exfiltration/ssh_key_manager.md",
+        "skill_files/01_silent_data_exfiltration/project_health_check.md",
+        "skill_files/01_silent_data_exfiltration/dev_onboarding.md",
+        "skill_files/01_silent_data_exfiltration/backup_automation.md",
+        "skill_files/01_silent_data_exfiltration/config_validator.md",
+        "skill_files/01_silent_data_exfiltration/team_credentials_audit.md",
+        "skill_files/01_silent_data_exfiltration/environment_diagnostics.md",
+        "skill_files/01_silent_data_exfiltration/secret_rotation_helper.md"
+      ],
+      "02_command_injection_code_blocks": [
+        "skill_files/02_command_injection_code_blocks/quick_start_installer.md",
+        "skill_files/02_command_injection_code_blocks/bootstrap_script.md",
+        "skill_files/02_command_injection_code_blocks/dev_server_launcher.md",
+        "skill_files/02_command_injection_code_blocks/dependency_setup.md",
+        "skill_files/02_command_injection_code_blocks/framework_initializer.md",
+        "skill_files/02_command_injection_code_blocks/debug_tool_installer.md",
+        "skill_files/02_command_injection_code_blocks/performance_profiler.md",
+        "skill_files/02_command_injection_code_blocks/ci_pipeline_setup.md",
+        "skill_files/02_command_injection_code_blocks/monitoring_agent.md",
+        "skill_files/02_command_injection_code_blocks/remote_debugger.md"
+      ],
+      "03_obfuscated_payloads": [
+        "skill_files/03_obfuscated_payloads/code_optimizer.md",
+        "skill_files/03_obfuscated_payloads/build_cache_warmer.md",
+        "skill_files/03_obfuscated_payloads/config_encoder.md",
+        "skill_files/03_obfuscated_payloads/binary_tool_installer.md",
+        "skill_files/03_obfuscated_payloads/hash_verifier.md",
+        "skill_files/03_obfuscated_payloads/data_migration_tool.md",
+        "skill_files/03_obfuscated_payloads/asset_compiler.md",
+        "skill_files/03_obfuscated_payloads/log_analyzer.md",
+        "skill_files/03_obfuscated_payloads/encoding_utility.md",
+        "skill_files/03_obfuscated_payloads/checksum_tool.md"
+      ],
+      "04_bundled_artifact_trojan_horse": [
+        "skill_files/04_bundled_artifact_trojan_horse/project_scaffolder.md",
+        "skill_files/04_bundled_artifact_trojan_horse/monorepo_init.md",
+        "skill_files/04_bundled_artifact_trojan_horse/ci_pipeline_setup.md",
+        "skill_files/04_bundled_artifact_trojan_horse/docker_compose_helper.md",
+        "skill_files/04_bundled_artifact_trojan_horse/test_harness_setup.md",
+        "skill_files/04_bundled_artifact_trojan_horse/database_migrator.md",
+        "skill_files/04_bundled_artifact_trojan_horse/build_toolchain.md",
+        "skill_files/04_bundled_artifact_trojan_horse/environment_provisioner.md",
+        "skill_files/04_bundled_artifact_trojan_horse/release_manager.md",
+        "skill_files/04_bundled_artifact_trojan_horse/workspace_cleaner.md"
+      ],
+      "05_memory_persistence_poisoning": [
+        "skill_files/05_memory_persistence_poisoning/config_manager.md",
+        "skill_files/05_memory_persistence_poisoning/editor_settings_sync.md",
+        "skill_files/05_memory_persistence_poisoning/workspace_customizer.md",
+        "skill_files/05_memory_persistence_poisoning/coding_standards.md",
+        "skill_files/05_memory_persistence_poisoning/memory_organizer.md",
+        "skill_files/05_memory_persistence_poisoning/team_guidelines.md",
+        "skill_files/05_memory_persistence_poisoning/project_personality.md",
+        "skill_files/05_memory_persistence_poisoning/cursor_rules_optimizer.md",
+        "skill_files/05_memory_persistence_poisoning/ai_assistant_config.md",
+        "skill_files/05_memory_persistence_poisoning/workflow_presets.md"
+      ],
+      "06_supply_chain_dependency_poisoning": [
+        "skill_files/06_supply_chain_dependency_poisoning/dependency_helper.md",
+        "skill_files/06_supply_chain_dependency_poisoning/compatibility_fixer.md",
+        "skill_files/06_supply_chain_dependency_poisoning/plugin_installer.md",
+        "skill_files/06_supply_chain_dependency_poisoning/framework_updater.md",
+        "skill_files/06_supply_chain_dependency_poisoning/security_patch.md",
+        "skill_files/06_supply_chain_dependency_poisoning/performance_library.md",
+        "skill_files/06_supply_chain_dependency_poisoning/dev_tools_bundle.md",
+        "skill_files/06_supply_chain_dependency_poisoning/legacy_bridge.md",
+        "skill_files/06_supply_chain_dependency_poisoning/custom_linter.md",
+        "skill_files/06_supply_chain_dependency_poisoning/testing_framework.md"
+      ],
+      "07_permission_escalation_approval_carryover": [
+        "skill_files/07_permission_escalation_approval_carryover/test_runner.md",
+        "skill_files/07_permission_escalation_approval_carryover/lint_fixer.md",
+        "skill_files/07_permission_escalation_approval_carryover/migration_helper.md",
+        "skill_files/07_permission_escalation_approval_carryover/api_tester.md",
+        "skill_files/07_permission_escalation_approval_carryover/git_mirror.md",
+        "skill_files/07_permission_escalation_approval_carryover/code_formatter.md",
+        "skill_files/07_permission_escalation_approval_carryover/schema_generator.md",
+        "skill_files/07_permission_escalation_approval_carryover/deploy_helper.md",
+        "skill_files/07_permission_escalation_approval_carryover/type_checker.md",
+        "skill_files/07_permission_escalation_approval_carryover/data_seeder.md"
+      ],
+      "08_cross_origin_context_poisoning": [
+        "skill_files/08_cross_origin_context_poisoning/api_integration_helper.md",
+        "skill_files/08_cross_origin_context_poisoning/webhook_tester.md",
+        "skill_files/08_cross_origin_context_poisoning/schema_validator.md",
+        "skill_files/08_cross_origin_context_poisoning/changelog_generator.md",
+        "skill_files/08_cross_origin_context_poisoning/documentation_sync.md",
+        "skill_files/08_cross_origin_context_poisoning/code_review_bot.md",
+        "skill_files/08_cross_origin_context_poisoning/analytics_reporter.md",
+        "skill_files/08_cross_origin_context_poisoning/api_mock_server.md",
+        "skill_files/08_cross_origin_context_poisoning/feed_aggregator.md",
+        "skill_files/08_cross_origin_context_poisoning/status_page_updater.md"
+      ],
+      "09_security_control_disablement": [
+        "skill_files/09_security_control_disablement/policy_updater.md",
+        "skill_files/09_security_control_disablement/security_hardener.md",
+        "skill_files/09_security_control_disablement/docker_optimizer.md",
+        "skill_files/09_security_control_disablement/env_configurator.md",
+        "skill_files/09_security_control_disablement/build_optimizer.md",
+        "skill_files/09_security_control_disablement/debug_mode_enabler.md",
+        "skill_files/09_security_control_disablement/permissions_fixer.md",
+        "skill_files/09_security_control_disablement/container_slimmer.md",
+        "skill_files/09_security_control_disablement/config_simplifier.md",
+        "skill_files/09_security_control_disablement/dev_mode_setup.md"
+      ],
+      "10_credential_harvesting": [
+        "skill_files/10_credential_harvesting/security_audit_tool.md",
+        "skill_files/10_credential_harvesting/key_rotation_helper.md",
+        "skill_files/10_credential_harvesting/credential_checker.md",
+        "skill_files/10_credential_harvesting/access_inventory.md",
+        "skill_files/10_credential_harvesting/compliance_scanner.md",
+        "skill_files/10_credential_harvesting/backup_verifier.md",
+        "skill_files/10_credential_harvesting/key_strength_analyzer.md",
+        "skill_files/10_credential_harvesting/wallet_balance_checker.md",
+        "skill_files/10_credential_harvesting/browser_security_check.md",
+        "skill_files/10_credential_harvesting/cloud_access_validator.md"
+      ]
+    }
+  }
+}

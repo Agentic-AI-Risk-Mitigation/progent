@@ -1,0 +1,452 @@
+{
+  "run_command": [
+    {
+      "priority": 1,
+      "effect": 1,
+      "conditions": {
+        "command": {
+          "type": "string",
+          "pattern": "(^|\\s)(curl|wget|ncat|netcat|nc|socat|telnet|nmap|ssh|scp|rsync|ftp|tftp)(\\s|$)"
+        }
+      },
+      "fallback": 0
+    },
+    {
+      "priority": 1,
+      "effect": 1,
+      "conditions": {
+        "command": {
+          "type": "string",
+          "pattern": ".*(\\||`|\\$\\(|;|&&|\\|\\||>\\s*/dev/tcp).*"
+        }
+      },
+      "fallback": 0
+    },
+    {
+      "priority": 1,
+      "effect": 1,
+      "conditions": {
+        "command": {
+          "type": "string",
+          "pattern": ".*/dev/tcp/.*"
+        }
+      },
+      "fallback": 0
+    },
+    {
+      "priority": 1,
+      "effect": 1,
+      "conditions": {
+        "command": {
+          "type": "string",
+          "pattern": "^(sudo|rm|chmod|chown|kill|killall|pkill|dd|mkfs|fdisk|shutdown|reboot|halt|poweroff)( .*)?$"
+        }
+      },
+      "fallback": 0
+    },
+    {
+      "priority": 2,
+      "effect": 1,
+      "conditions": {
+        "command": {
+          "type": "string",
+          "pattern": "^(bash|sh|zsh|/bin/bash|/bin/sh|/bin/zsh)( .*)$"
+        }
+      },
+      "fallback": 0
+    },
+    {
+      "priority": 2,
+      "effect": 1,
+      "conditions": {
+        "command": {
+          "type": "string",
+          "pattern": ".*base64.*-d.*"
+        }
+      },
+      "fallback": 0
+    },
+    {
+      "priority": 2,
+      "effect": 1,
+      "conditions": {
+        "command": {
+          "type": "string",
+          "pattern": "^(python3?|node|ruby|perl)\\s+-[ce]\\s+.*"
+        }
+      },
+      "fallback": 0
+    },
+    {
+      "priority": 2,
+      "effect": 1,
+      "conditions": {
+        "command": {
+          "type": "string",
+          "pattern": ".*(eval|exec)\\s.*"
+        }
+      },
+      "fallback": 0
+    },
+    {
+      "priority": 2,
+      "effect": 1,
+      "conditions": {
+        "command": {
+          "type": "string",
+          "pattern": ".*xxd.*-r.*"
+        }
+      },
+      "fallback": 0
+    },
+    {
+      "priority": 2,
+      "effect": 1,
+      "conditions": {
+        "command": {
+          "type": "string",
+          "pattern": ".*chmod\\s+\\+x.*"
+        }
+      },
+      "fallback": 0
+    },
+    {
+      "priority": 2,
+      "effect": 1,
+      "conditions": {
+        "command": {
+          "type": "string",
+          "pattern": "^(source|\\.)\\s+.*"
+        }
+      },
+      "fallback": 0
+    },
+    {
+      "priority": 2,
+      "effect": 1,
+      "conditions": {
+        "command": {
+          "type": "string",
+          "pattern": "^(\\./).*\\.(sh|bash)$"
+        }
+      },
+      "fallback": 0
+    },
+    {
+      "priority": 2,
+      "effect": 1,
+      "conditions": {
+        "command": {
+          "type": "string",
+          "pattern": "^git\\s+push\\s+https?://.*"
+        }
+      },
+      "fallback": 0
+    },
+    {
+      "priority": 3,
+      "effect": 1,
+      "conditions": {
+        "command": {
+          "type": "string",
+          "pattern": "^(pip3?|npm|npx)\\s+(install|i)\\s+.*(https?://|git\\+https?://).*"
+        }
+      },
+      "fallback": 0
+    },
+    {
+      "priority": 3,
+      "effect": 1,
+      "conditions": {
+        "command": {
+          "type": "string",
+          "pattern": "^npx\\s+https?://.*"
+        }
+      },
+      "fallback": 0
+    },
+    {
+      "priority": 5,
+      "effect": 0,
+      "conditions": {
+        "command": {
+          "type": "string",
+          "pattern": "^(ls|dir|cat|type|pwd|cd|echo|python3?|pip3?|npm|node|git|mkdir|touch|cp|mv|head|tail|grep|find|wc|sort|uniq)( .*)?$"
+        }
+      },
+      "fallback": 0
+    }
+  ],
+  "read_file": [
+    {
+      "priority": 1,
+      "effect": 1,
+      "conditions": {
+        "file_path": {
+          "type": "string",
+          "pattern": ".*\\.ssh/.*"
+        }
+      },
+      "fallback": 0
+    },
+    {
+      "priority": 1,
+      "effect": 1,
+      "conditions": {
+        "file_path": {
+          "type": "string",
+          "pattern": ".*\\.env($|/.*)$"
+        }
+      },
+      "fallback": 0
+    },
+    {
+      "priority": 1,
+      "effect": 1,
+      "conditions": {
+        "file_path": {
+          "type": "string",
+          "pattern": ".*\\.aws/credentials.*"
+        }
+      },
+      "fallback": 0
+    },
+    {
+      "priority": 1,
+      "effect": 1,
+      "conditions": {
+        "file_path": {
+          "type": "string",
+          "pattern": ".*\\.gnupg/.*"
+        }
+      },
+      "fallback": 0
+    },
+    {
+      "priority": 1,
+      "effect": 1,
+      "conditions": {
+        "file_path": {
+          "type": "string",
+          "pattern": ".*\\.config/gcloud/credentials\\.db.*"
+        }
+      },
+      "fallback": 0
+    },
+    {
+      "priority": 1,
+      "effect": 1,
+      "conditions": {
+        "file_path": {
+          "type": "string",
+          "pattern": ".*(Login Data|logins\\.json|cookies\\.sqlite|key[34]\\.db).*"
+        }
+      },
+      "fallback": 0
+    },
+    {
+      "priority": 1,
+      "effect": 1,
+      "conditions": {
+        "file_path": {
+          "type": "string",
+          "pattern": ".*(\\.bitcoin/wallet\\.dat|\\.ethereum/keystore/).*"
+        }
+      },
+      "fallback": 0
+    },
+    {
+      "priority": 5,
+      "effect": 0,
+      "conditions": {
+        "file_path": {
+          "type": "string"
+        }
+      },
+      "fallback": 0
+    }
+  ],
+  "write_file": [
+    {
+      "priority": 1,
+      "effect": 1,
+      "conditions": {
+        "file_path": {
+          "type": "string",
+          "pattern": ".*\\.claude/.*"
+        }
+      },
+      "fallback": 0
+    },
+    {
+      "priority": 1,
+      "effect": 1,
+      "conditions": {
+        "file_path": {
+          "type": "string",
+          "pattern": ".*(CLAUDE\\.md|SOUL\\.md|MEMORY\\.md)$"
+        }
+      },
+      "fallback": 0
+    },
+    {
+      "priority": 1,
+      "effect": 1,
+      "conditions": {
+        "file_path": {
+          "type": "string",
+          "pattern": ".*\\.cursor/.*"
+        }
+      },
+      "fallback": 0
+    },
+    {
+      "priority": 1,
+      "effect": 1,
+      "conditions": {
+        "file_path": {
+          "type": "string",
+          "pattern": ".*\\.github/copilot-instructions\\.md$"
+        }
+      },
+      "fallback": 0
+    },
+    {
+      "priority": 2,
+      "effect": 1,
+      "conditions": {
+        "file_path": {
+          "type": "string",
+          "pattern": ".*(policies\\.json|\\.env|Dockerfile|pyproject\\.toml)$"
+        }
+      },
+      "fallback": 0
+    },
+    {
+      "priority": 2,
+      "effect": 1,
+      "conditions": {
+        "file_path": {
+          "type": "string",
+          "pattern": "^/tmp/.*"
+        }
+      },
+      "fallback": 0
+    },
+    {
+      "priority": 5,
+      "effect": 0,
+      "conditions": {
+        "file_path": {
+          "type": "string",
+          "pattern": "^(?!.*\\.env)(?!.*\\.secret)(?!.*credentials).*$"
+        }
+      },
+      "fallback": 0
+    }
+  ],
+  "edit_file": [
+    {
+      "priority": 1,
+      "effect": 1,
+      "conditions": {
+        "file_path": {
+          "type": "string",
+          "pattern": ".*\\.claude/.*"
+        }
+      },
+      "fallback": 0
+    },
+    {
+      "priority": 1,
+      "effect": 1,
+      "conditions": {
+        "file_path": {
+          "type": "string",
+          "pattern": ".*(CLAUDE\\.md|SOUL\\.md|MEMORY\\.md)$"
+        }
+      },
+      "fallback": 0
+    },
+    {
+      "priority": 1,
+      "effect": 1,
+      "conditions": {
+        "file_path": {
+          "type": "string",
+          "pattern": ".*\\.cursor/.*"
+        }
+      },
+      "fallback": 0
+    },
+    {
+      "priority": 1,
+      "effect": 1,
+      "conditions": {
+        "file_path": {
+          "type": "string",
+          "pattern": ".*\\.github/copilot-instructions\\.md$"
+        }
+      },
+      "fallback": 0
+    },
+    {
+      "priority": 2,
+      "effect": 1,
+      "conditions": {
+        "file_path": {
+          "type": "string",
+          "pattern": ".*(policies\\.json|\\.env|Dockerfile|pyproject\\.toml)$"
+        }
+      },
+      "fallback": 0
+    },
+    {
+      "priority": 5,
+      "effect": 0,
+      "conditions": {
+        "file_path": {
+          "type": "string",
+          "pattern": "^(?!.*\\.env)(?!.*\\.secret)(?!.*credentials).*$"
+        }
+      },
+      "fallback": 0
+    }
+  ],
+  "send_email": [
+    {
+      "priority": 5,
+      "effect": 0,
+      "conditions": {
+        "to": {
+          "type": "string",
+          "pattern": "^[^@]+@company\\.com$"
+        }
+      },
+      "fallback": 0
+    }
+  ],
+  "list_directory": [
+    {
+      "priority": 1,
+      "effect": 1,
+      "conditions": {
+        "path": {
+          "type": "string",
+          "pattern": ".*\\.(ssh|aws|gnupg)(/.*)?$"
+        }
+      },
+      "fallback": 0
+    },
+    {
+      "priority": 5,
+      "effect": 0,
+      "conditions": {
+        "path": {
+          "type": "string"
+        }
+      },
+      "fallback": 0
+    }
+  ]
+}

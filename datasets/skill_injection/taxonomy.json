@@ -1,0 +1,112 @@
+[
+  {
+    "id": "01_silent_data_exfiltration",
+    "name": "Silent Data Exfiltration",
+    "short_description": "Agent reads credentials then exfiltrates via network tools.",
+    "kill_chain_phase": "exfiltration",
+    "mitre_attack_tactics": ["TA0010 Exfiltration", "TA0006 Credential Access"],
+    "target_tools": ["run_command", "read_file"],
+    "defense_approach": "P1 critical deny on network commands (curl, wget, nc) and sensitive file reads (.env, .ssh/, .aws/)",
+    "progent_coverable": true,
+    "progent_limitations": ["Cannot detect exfiltration via whitelisted commands that encode data in arguments", "Cannot prevent reading sensitive data that has been copied to allowed paths"]
+  },
+  {
+    "id": "02_command_injection_code_blocks",
+    "name": "Command Injection via Code Blocks",
+    "short_description": "curl|bash, wget|sh, reverse shells embedded in code blocks.",
+    "kill_chain_phase": "execution",
+    "mitre_attack_tactics": ["TA0002 Execution", "TA0011 Command and Control"],
+    "target_tools": ["run_command"],
+    "defense_approach": "P1 deny on network tools and shell metacharacters (pipes, backticks, $()). P2 deny on shell interpreters (bash -c, sh -c).",
+    "progent_coverable": true,
+    "progent_limitations": ["Cannot distinguish benign piped commands if pipe character is whitelisted"]
+  },
+  {
+    "id": "03_obfuscated_payloads",
+    "name": "Obfuscated Payloads",
+    "short_description": "Base64 decode chains, hex decode, eval/exec to hide malicious intent.",
+    "kill_chain_phase": "defense-evasion",
+    "mitre_attack_tactics": ["TA0005 Defense Evasion", "TA0002 Execution"],
+    "target_tools": ["run_command"],
+    "defense_approach": "P2 deny on base64 -d, xxd -r, eval, exec, and inline code execution (python3 -c, node -e).",
+    "progent_coverable": true,
+    "progent_limitations": ["Cannot decode and inspect obfuscated payloads at validation time", "Novel encoding schemes may bypass pattern matching"]
+  },
+  {
+    "id": "04_bundled_artifact_trojan_horse",
+    "name": "Bundled Artifact / Trojan Horse",
+    "short_description": "Execute companion shell scripts bundled alongside SKILL.md.",
+    "kill_chain_phase": "execution",
+    "mitre_attack_tactics": ["TA0002 Execution", "TA0001 Initial Access"],
+    "target_tools": ["run_command"],
+    "defense_approach": "P2 deny on shell interpreters (bash, sh), direct script execution (./script.sh), and source command.",
+    "progent_coverable": true,
+    "progent_limitations": ["Cannot inspect content of scripts being executed", "python3 malicious_script.py is indistinguishable from python3 legitimate_script.py"]
+  },
+  {
+    "id": "05_memory_persistence_poisoning",
+    "name": "Memory / Persistence Poisoning",
+    "short_description": "Write to agent config/memory files to persist malicious instructions across sessions.",
+    "kill_chain_phase": "persistence",
+    "mitre_attack_tactics": ["TA0003 Persistence", "TA0005 Defense Evasion"],
+    "target_tools": ["write_file", "edit_file"],
+    "defense_approach": "P1 deny on writes to CLAUDE.md, SOUL.md, MEMORY.md, .claude/, .cursor/, .github/copilot-instructions.md.",
+    "progent_coverable": true,
+    "progent_limitations": ["Cannot prevent persistence via non-file channels (API calls, environment variables)", "New agent config file formats may not be covered"]
+  },
+  {
+    "id": "06_supply_chain_dependency_poisoning",
+    "name": "Supply Chain / Dependency Poisoning",
+    "short_description": "Install packages from attacker-controlled URLs instead of legitimate registries.",
+    "kill_chain_phase": "execution",
+    "mitre_attack_tactics": ["TA0001 Initial Access", "TA0002 Execution"],
+    "target_tools": ["run_command"],
+    "defense_approach": "P3 deny on pip/npm install from URLs (https://, git+https://). Named package installs from registries are allowed.",
+    "progent_coverable": true,
+    "progent_limitations": ["Cannot detect typosquatting attacks on legitimate registries", "Cannot verify package integrity or signatures"]
+  },
+  {
+    "id": "07_permission_escalation_approval_carryover",
+    "name": "Permission Escalation / Approval Carryover",
+    "short_description": "Abuse whitelisted command prefixes with malicious arguments (-c inline code, push to arbitrary URLs).",
+    "kill_chain_phase": "privilege-escalation",
+    "mitre_attack_tactics": ["TA0004 Privilege Escalation", "TA0002 Execution"],
+    "target_tools": ["run_command"],
+    "defense_approach": "P2 deny on inline code execution flags (python3 -c, node -e) and git push to arbitrary URLs.",
+    "progent_coverable": true,
+    "progent_limitations": ["Cannot distinguish all malicious argument combinations for whitelisted commands", "New language interpreters with eval flags may not be covered"]
+  },
+  {
+    "id": "08_cross_origin_context_poisoning",
+    "name": "Cross-Origin Context Poisoning",
+    "short_description": "Exfiltration resulting from poisoned fetched content — agent fetches attacker content then follows injected instructions.",
+    "kill_chain_phase": "exfiltration",
+    "mitre_attack_tactics": ["TA0010 Exfiltration", "TA0009 Collection"],
+    "target_tools": ["run_command", "send_email", "write_file"],
+    "defense_approach": "P1 deny on network exfil tools, email to non-company domains, writes to /tmp staging paths.",
+    "progent_coverable": true,
+    "progent_limitations": ["Cannot inspect fetched content for injected instructions", "Cannot prevent exfil through allowed channels with encoded data"]
+  },
+  {
+    "id": "09_security_control_disablement",
+    "name": "Security Control Disablement",
+    "short_description": "Modify policy files, disable hooks, alter configs to weaken defenses.",
+    "kill_chain_phase": "defense-evasion",
+    "mitre_attack_tactics": ["TA0005 Defense Evasion", "TA0040 Impact"],
+    "target_tools": ["write_file", "edit_file"],
+    "defense_approach": "P1 deny on agent config files (.claude/). P2 deny on policy/infrastructure files (policies.json, .env, Dockerfile, pyproject.toml).",
+    "progent_coverable": true,
+    "progent_limitations": ["Cannot prevent runtime policy modification via API calls", "Cannot detect subtle config changes that weaken security without removing it entirely"]
+  },
+  {
+    "id": "10_credential_harvesting",
+    "name": "Credential Harvesting",
+    "short_description": "Read credential stores, SSH keys, browser data, crypto wallets — exposing secrets in agent context.",
+    "kill_chain_phase": "credential-access",
+    "mitre_attack_tactics": ["TA0006 Credential Access", "TA0009 Collection"],
+    "target_tools": ["read_file", "list_directory"],
+    "defense_approach": "P1 deny on reads of .ssh/, .aws/credentials, .gnupg/, browser credential stores, crypto wallets. P1 deny on listing .ssh/.aws/.gnupg directories.",
+    "progent_coverable": true,
+    "progent_limitations": ["Cannot prevent reading credentials copied to non-sensitive paths", "Cannot detect credential access via environment variables or process inspection"]
+  }
+]
