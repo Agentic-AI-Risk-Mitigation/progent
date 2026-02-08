@@ -9,7 +9,7 @@ from progent.core import (
     update_security_policy,
 )
 from progent.exceptions import ProgentBlockedError
-from progent.wrapper import secure
+from progent.wrapper import apply_secure_tool_wrapper
 
 
 @pytest.fixture(autouse=True)
@@ -34,7 +34,7 @@ class TestSecureDecorator:
             }
         )
 
-        @secure
+        @apply_secure_tool_wrapper
         def greet(name: str) -> str:
             """Greet someone."""
             return f"Hello, {name}!"
@@ -45,7 +45,7 @@ class TestSecureDecorator:
     def test_decorator_registers_tool(self):
         """Test that decorator registers tool."""
 
-        @secure
+        @apply_secure_tool_wrapper
         def my_tool(arg: str) -> str:
             """My tool description."""
             return arg
@@ -62,7 +62,7 @@ class TestSecureDecorator:
             }
         )
 
-        @secure
+        @apply_secure_tool_wrapper
         def restricted(data: str) -> str:
             """Restricted operation."""
             return data
@@ -87,7 +87,7 @@ class TestSecureDecorator:
             }
         )
 
-        @secure
+        @apply_secure_tool_wrapper
         def write_data(path: str, content: str) -> str:
             """Write data to path."""
             return f"Written to {path}"
@@ -103,7 +103,7 @@ class TestSecureDecorator:
     def test_decorator_preserves_function_metadata(self):
         """Test that decorator preserves function metadata."""
 
-        @secure
+        @apply_secure_tool_wrapper
         def my_func(x: int) -> int:
             """My docstring."""
             return x * 2
@@ -122,7 +122,7 @@ class TestSecureDecorator:
             }
         )
 
-        @secure
+        @apply_secure_tool_wrapper
         def with_defaults(required: str, optional: str = "default") -> str:
             """Function with defaults."""
             return f"{required}-{optional}"
@@ -145,7 +145,7 @@ class TestSecureFunction:
 
         update_security_policy({"my_tool": [(1, 0, {}, 0)]})
 
-        wrapped = secure(my_tool)
+        wrapped = apply_secure_tool_wrapper(my_tool)
         result = wrapped(x="hello")
         assert result == "HELLO"
 
@@ -165,7 +165,7 @@ class TestSecureFunction:
             }
         )
 
-        wrapped = secure([tool1, tool2])
+        wrapped = apply_secure_tool_wrapper([tool1, tool2])
 
         assert len(wrapped) == 2
         assert wrapped[0](a="test1") == "test1"
@@ -178,7 +178,7 @@ class TestToolDefinitionExtraction:
     def test_extracts_description_from_docstring(self):
         """Test that description is extracted from docstring."""
 
-        @secure
+        @apply_secure_tool_wrapper
         def described_tool(x: str) -> str:
             """This is the tool description.
 
@@ -193,7 +193,7 @@ class TestToolDefinitionExtraction:
     def test_extracts_parameter_types(self):
         """Test that parameter types are extracted."""
 
-        @secure
+        @apply_secure_tool_wrapper
         def typed_tool(name: str, count: int, active: bool) -> str:
             """A typed tool."""
             return f"{name}: {count}, {active}"
@@ -208,7 +208,7 @@ class TestToolDefinitionExtraction:
     def test_handles_missing_docstring(self):
         """Test handling of missing docstring."""
 
-        @secure
+        @apply_secure_tool_wrapper
         def no_docs(x: str) -> str:
             return x
 
