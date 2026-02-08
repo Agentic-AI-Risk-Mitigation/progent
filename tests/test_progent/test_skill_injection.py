@@ -1080,17 +1080,11 @@ class TestCredentialHarvesting:
             ("read_file", {"file_path": "/home/user/.config/gcloud/credentials.db"}),
             (
                 "read_file",
-                {
-                    "file_path": (
-                        "/home/user/.config/google-chrome/Default/Login Data"
-                    )
-                },
+                {"file_path": ("/home/user/.config/google-chrome/Default/Login Data")},
             ),
             (
                 "read_file",
-                {
-                    "file_path": "/home/user/.mozilla/firefox/profile/logins.json"
-                },
+                {"file_path": "/home/user/.mozilla/firefox/profile/logins.json"},
             ),
             ("read_file", {"file_path": "/home/user/.bitcoin/wallet.dat"}),
             ("read_file", {"file_path": "/home/user/.ethereum/keystore/keyfile"}),
