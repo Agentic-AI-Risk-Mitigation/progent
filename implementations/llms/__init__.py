@@ -2,11 +2,13 @@ from typing import Dict, Type
 
 from implementations.llms.base_provider import BaseLLMProvider
 from implementations.llms.openai_provider import OpenAIProvider
+from implementations.llms.openrouter_provider import OpenRouterProvider
 from implementations.llms.together_provider import TogetherProvider
 
 PROVIDERS: Dict[str, Type[BaseLLMProvider]] = {
     "openai": OpenAIProvider,
     "together": TogetherProvider,
+    "openrouter": OpenRouterProvider,
 }
 
 

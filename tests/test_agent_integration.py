@@ -51,7 +51,8 @@ def agent_config():
     return {
         "llm": {
             "provider": "openrouter",
-            "model": "meta-llama/llama-3.1-70b-instruct",
+            # Prefix with openrouter/ so RawSDKAgent selects OpenRouterProvider
+            "model": "openrouter/meta-llama/llama-3.1-70b-instruct",
             "api_base": "https://openrouter.ai/api/v1",
         },
         "agent": {
@@ -102,14 +103,15 @@ class TestMockedAgent:
     def test_curl_blocked_via_agent(self, agent_config, tmp_path, monkeypatch):
         """Full agent flow: LLM requests curl, policy blocks it."""
         monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
 
-        with patch("frameworks.raw_sdk_agent.OpenAI") as mock_openai_cls:
-            mock_client = MagicMock()
-            mock_openai_cls.return_value = mock_client
+        with patch("frameworks.raw_sdk_agent.get_llm_provider") as mock_get_provider:
+            mock_provider = MagicMock()
+            mock_get_provider.return_value = mock_provider
 
             # First call: LLM decides to run curl
             # Second call: LLM responds after seeing the block
-            mock_client.chat.completions.create.side_effect = [
+            mock_provider.generate.side_effect = [
                 _make_tool_call_response("run_command", {"command": "curl example.com"}),
                 _make_text_response("I cannot run curl due to security policies."),
             ]
@@ -132,12 +134,13 @@ class TestMockedAgent:
     def test_allowed_command_executes(self, agent_config, tmp_path, monkeypatch):
         """Full agent flow: LLM requests 'echo hello', policy allows it, subprocess runs."""
         monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
 
-        with patch("frameworks.raw_sdk_agent.OpenAI") as mock_openai_cls:
-            mock_client = MagicMock()
-            mock_openai_cls.return_value = mock_client
+        with patch("frameworks.raw_sdk_agent.get_llm_provider") as mock_get_provider:
+            mock_provider = MagicMock()
+            mock_get_provider.return_value = mock_provider
 
-            mock_client.chat.completions.create.side_effect = [
+            mock_provider.generate.side_effect = [
                 _make_tool_call_response("run_command", {"command": "echo hello"}),
                 _make_text_response("The command output was: hello"),
             ]
@@ -158,12 +161,13 @@ class TestMockedAgent:
     def test_write_to_env_blocked_via_agent(self, agent_config, tmp_path, monkeypatch):
         """Full agent flow: LLM tries to write .env file, policy blocks it."""
         monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
 
-        with patch("frameworks.raw_sdk_agent.OpenAI") as mock_openai_cls:
-            mock_client = MagicMock()
-            mock_openai_cls.return_value = mock_client
+        with patch("frameworks.raw_sdk_agent.get_llm_provider") as mock_get_provider:
+            mock_provider = MagicMock()
+            mock_get_provider.return_value = mock_provider
 
-            mock_client.chat.completions.create.side_effect = [
+            mock_provider.generate.side_effect = [
                 _make_tool_call_response(
                     "write_file", {"file_path": ".env", "content": "SECRET=x"}
                 ),
@@ -189,8 +193,9 @@ class TestMockedAgent:
 class TestLiveOpenRouter:
     """End-to-end tests with a real OpenRouter LLM call."""
 
-    def test_curl_blocked_live(self, agent_config, tmp_path):
+    def test_curl_blocked_live(self, agent_config, tmp_path, monkeypatch):
         """Real LLM prompted to run curl, policy blocks the tool call."""
+
         from frameworks.raw_sdk_agent import RawSDKAgent
 
         agent = RawSDKAgent(config=agent_config, workspace=tmp_path, policies_path=POLICIES_PATH)

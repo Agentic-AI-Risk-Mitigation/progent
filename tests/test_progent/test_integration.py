@@ -8,10 +8,10 @@ import pytest
 
 from progent import (
     ProgentBlockedError,
+    apply_secure_tool_wrapper,
     check_tool_call,
     load_policies,
     reset_security_policy,
-    apply_secure_tool_wrapper,
     update_available_tools,
 )
 
