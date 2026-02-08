@@ -3,12 +3,16 @@ from collections.abc import Callable, Sequence
 
 import yaml
 from pydantic import BaseModel
+from dotenv import load_dotenv
+load_dotenv()
+import os
 
 from agentdojo.agent_pipeline.base_pipeline_element import BasePipelineElement
 from agentdojo.agent_pipeline.llms.google_llm import EMPTY_FUNCTION_NAME
 from agentdojo.functions_runtime import EmptyEnv, Env, FunctionReturnType, FunctionsRuntime
 from agentdojo.logging import Logger
 from agentdojo.types import ChatMessage, ChatToolResultMessage, text_content_block_from_string
+from progent.generation import update_policies_from_result
 
 
 def is_string_list(s: str):
@@ -71,6 +75,8 @@ class ToolsExecutor(BasePipelineElement):
             return query, runtime, env, messages, extra_args
 
         tool_call_results = []
+        intermediate_calls=[]
+        intermediate_results = []
         for tool_call in messages[-1]["tool_calls"]:
             if tool_call.function == EMPTY_FUNCTION_NAME:
                 tool_call_results.append(
@@ -112,6 +118,15 @@ class ToolsExecutor(BasePipelineElement):
                     error=error,
                 )
             )
+            intermediate_calls.append({"name": tool_call.function, "args": tool_call.args})
+            intermediate_results.append(formatted_tool_call_result)
+        
+        print(f"\n   ✓ All {len(tool_call_results)} tool call(s) completed")
+        
+        flag = os.getenv('PROGENT_UPDATE', "False")
+        if flag == "True":
+            print("   🔒 Updating security policy (PROGENT_UPDATE=True)")
+            update_policies_from_result(intermediate_calls, str(intermediate_results), manual_confirm=False)
         return query, runtime, env, [*messages, *tool_call_results], extra_args
 
 

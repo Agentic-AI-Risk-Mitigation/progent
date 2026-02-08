@@ -35,7 +35,7 @@ from progent.core import (
 )
 from progent.exceptions import PolicyValidationError, ProgentBlockedError
 from progent.policy import load_policies
-from progent.wrapper import secure, secure_tool_wrapper
+from progent.wrapper import apply_secure_tool_wrapper, secure_tool_wrapper
 
 __version__ = "0.1.0"
 
@@ -52,7 +52,7 @@ __all__ = [
     # Policy loading
     "load_policies",
     # Wrapper/decorator
-    "secure",
+    "apply_secure_tool_wrapper",
     "secure_tool_wrapper",
     # Exceptions
     "ProgentBlockedError",

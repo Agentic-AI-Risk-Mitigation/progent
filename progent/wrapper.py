@@ -24,14 +24,14 @@ F = TypeVar("F", bound=Callable)
 
 
 @overload
-def secure(func_or_tools: F) -> F: ...
+def apply_secure_tool_wrapper(func_or_tools: F) -> F: ...
 
 
 @overload
-def secure(func_or_tools: list) -> list: ...
+def apply_secure_tool_wrapper(func_or_tools: list) -> list: ...
 
 
-def secure(func_or_tools):
+def apply_secure_tool_wrapper(func_or_tools):
     """
     Wrap a function or list of tools with Progent policy enforcement.
 

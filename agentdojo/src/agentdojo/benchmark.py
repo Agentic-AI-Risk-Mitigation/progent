@@ -18,7 +18,7 @@ from agentdojo.logging import Logger, TraceLogger
 from agentdojo.task_suite.load_suites import get_suite
 from agentdojo.task_suite.task_suite import TaskSuite
 from agentdojo.types import ChatMessage
-
+from progent.core import reset_security_policy
 
 class SuiteResults(TypedDict):
     """The results of running a suite of tasks with a given pipeline."""
@@ -200,6 +200,7 @@ def benchmark_suite_with_injections(
     injection_tasks_utility_results = {}
     if not attack.is_dos_attack:
         for injection_task_id, injection_task in injection_tasks_to_run.items():
+            reset_security_policy(include_manual=True)
             successful, _ = run_task_without_injection_tasks(
                 suite, agent_pipeline, injection_task, logdir, force_rerun, benchmark_version
             )
@@ -209,6 +210,7 @@ def benchmark_suite_with_injections(
             warnings.warn("Not all injection tasks were solved as user tasks.")
 
     for user_task in user_tasks_to_run:
+        reset_security_policy(include_manual=True)
         utility, security = run_task_with_injection_tasks(
             suite,
             agent_pipeline,

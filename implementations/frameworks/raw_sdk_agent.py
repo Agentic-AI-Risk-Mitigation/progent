@@ -1,9 +1,10 @@
 """
-Raw SDK agent implementation using OpenAI-compatible APIs directly.
+Raw SDK agent implementation using abstracted LLM providers.
 
 This is a THIN ADAPTER that:
 1. Converts unified tool definitions to OpenAI function format
 2. Handles the tool calling loop manually
+3. Delegates LLM calls to the appropriate provider based on model name
 
 Tool definitions and policy enforcement are handled by core modules.
 DO NOT define tools or policy logic here.
@@ -22,14 +23,15 @@ from core.progent_enforcer import init_progent
 from core.secured_executor import create_secured_handler
 from core.tool_definitions import TOOL_DEFINITIONS
 from frameworks.base_agent import BaseAgent
-from openai import OpenAI
+from implementations.llms import get_llm_provider
 
 
 class RawSDKAgent(BaseAgent):
     """
-    Agent implementation using the raw OpenAI SDK.
-
-    Compatible with OpenRouter and other OpenAI-compatible APIs.
+    Agent implementation using abstracted LLM providers.
+    
+    Supports 'provider/model-name' format for model specification.
+    Currently supports 'openai' and 'together' providers.
     """
 
     def __init__(
@@ -42,16 +44,33 @@ class RawSDKAgent(BaseAgent):
 
         # Get LLM config
         llm_config = config.get("llm", {})
-        api_base = llm_config.get("api_base", "https://openrouter.ai/api/v1")
-        self.model = llm_config.get("model", "meta-llama/llama-3.1-70b-instruct")
+        full_model_name = llm_config.get("model", "openai/gpt-4o")
+        
+        # Parse provider and model name
+        if "/" in full_model_name:
+            provider_parts = full_model_name.split("/", 1)
+            # Handle case where split might result in unexpected parts, though 2 is expected
+            self.provider_name = provider_parts[0]
+            self.model_name = provider_parts[1]
+        else:
+            # Default to openai if no provider specified
+            self.provider_name = "openai"
+            self.model_name = full_model_name
 
-        # Get API key from environment
-        api_key = os.environ.get("OPENROUTER_API_KEY") or os.environ.get("OPENAI_API_KEY")
-        if not api_key:
-            raise ValueError("OPENROUTER_API_KEY or OPENAI_API_KEY environment variable not set")
+        # Provider configuration
+        provider_kwargs = {}
+        api_base = llm_config.get("api_base")
+        if api_base:
+            provider_kwargs["base_url"] = api_base
 
-        # Initialize the client
-        self.client = OpenAI(api_key=api_key, base_url=api_base)
+        # Initialize the provider
+        try:
+            self.provider = get_llm_provider(self.provider_name, **provider_kwargs)
+        except ValueError as e:
+            # If the provider name extracted (e.g. from meta-llama/...) is not supported, 
+            # and it was likely the old default, we might want to warn or fail.
+            # For now, we fail as the new system requires explicit supported providers.
+            raise ValueError(f"Failed to initialize LLM provider: {e}")
 
         # Initialize Progent policies
         if policies_path:
@@ -111,8 +130,8 @@ class RawSDKAgent(BaseAgent):
         try:
             self.messages.append({"role": "user", "content": user_input})
 
-            response = self.client.chat.completions.create(
-                model=self.model,
+            response = self.provider.generate(
+                model_name=self.model_name,
                 messages=self.messages,
                 tools=self.tools_schema,
                 tool_choice="auto",
@@ -156,8 +175,8 @@ class RawSDKAgent(BaseAgent):
                         }
                     )
 
-                response = self.client.chat.completions.create(
-                    model=self.model,
+                response = self.provider.generate(
+                    model_name=self.model_name,
                     messages=self.messages,
                     tools=self.tools_schema,
                     tool_choice="auto",
