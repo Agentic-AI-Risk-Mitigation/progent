@@ -19,7 +19,6 @@ from progent.core import (
     get_user_query,
     set_user_query,
     update_security_policy,
-    _sort_policy,
 )
 
 # =============================================================================
@@ -509,5 +508,3 @@ def reset_token_usage() -> None:
     global _total_completion_tokens, _total_prompt_tokens
     _total_completion_tokens = 0
     _total_prompt_tokens = 0
-    
-

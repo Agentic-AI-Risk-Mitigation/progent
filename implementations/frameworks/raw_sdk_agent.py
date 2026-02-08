@@ -11,7 +11,6 @@ DO NOT define tools or policy logic here.
 """
 
 import json
-import os
 import sys
 from pathlib import Path
 from typing import Any, Optional
@@ -23,13 +22,14 @@ from core.progent_enforcer import init_progent
 from core.secured_executor import create_secured_handler
 from core.tool_definitions import TOOL_DEFINITIONS
 from frameworks.base_agent import BaseAgent
+
 from implementations.llms import get_llm_provider
 
 
 class RawSDKAgent(BaseAgent):
     """
     Agent implementation using abstracted LLM providers.
-    
+
     Supports 'provider/model-name' format for model specification.
     Currently supports 'openai' and 'together' providers.
     """
@@ -45,7 +45,7 @@ class RawSDKAgent(BaseAgent):
         # Get LLM config
         llm_config = config.get("llm", {})
         full_model_name = llm_config.get("model", "openai/gpt-4o")
-        
+
         # Parse provider and model name
         if "/" in full_model_name:
             provider_parts = full_model_name.split("/", 1)
@@ -67,7 +67,7 @@ class RawSDKAgent(BaseAgent):
         try:
             self.provider = get_llm_provider(self.provider_name, **provider_kwargs)
         except ValueError as e:
-            # If the provider name extracted (e.g. from meta-llama/...) is not supported, 
+            # If the provider name extracted (e.g. from meta-llama/...) is not supported,
             # and it was likely the old default, we might want to warn or fail.
             # For now, we fail as the new system requires explicit supported providers.
             raise ValueError(f"Failed to initialize LLM provider: {e}")

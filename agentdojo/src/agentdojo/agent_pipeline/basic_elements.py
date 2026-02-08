@@ -1,10 +1,11 @@
 import warnings
 from collections.abc import Sequence
 
+from progent.generation import generate_policies
+
 from agentdojo.agent_pipeline.base_pipeline_element import BasePipelineElement
 from agentdojo.functions_runtime import EmptyEnv, Env, FunctionsRuntime
 from agentdojo.types import ChatMessage, ChatSystemMessage, ChatUserMessage, text_content_block_from_string
-from progent.generation import generate_policies
 
 
 class InitQuery(BasePipelineElement):
@@ -22,11 +23,11 @@ class InitQuery(BasePipelineElement):
         if len(messages) > 2 or (len(messages) == 1 and messages[0]["role"] != "system"):
             warnings.warn("The query is not being added as the first message or after the system message")
         query_message = ChatUserMessage(role="user", content=[text_content_block_from_string(query)])
-        
+
         print("      🔒 Generating security policy from query...")
         generate_policies(query)
         print("      ✓ Security policy generated")
-        
+
         messages = [*messages, query_message]
         return query, runtime, env, messages, extra_args
 

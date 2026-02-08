@@ -7,6 +7,7 @@ from pathlib import Path
 from cohere.core.api_error import ApiError
 from google.genai.errors import ServerError
 from openai import BadRequestError, UnprocessableEntityError
+from progent.core import reset_security_policy
 from pydantic import BaseModel, ConfigDict, ValidationError, model_validator
 from typing_extensions import Self, TypedDict
 
@@ -18,7 +19,7 @@ from agentdojo.logging import Logger, TraceLogger
 from agentdojo.task_suite.load_suites import get_suite
 from agentdojo.task_suite.task_suite import TaskSuite
 from agentdojo.types import ChatMessage
-from progent.core import reset_security_policy
+
 
 class SuiteResults(TypedDict):
     """The results of running a suite of tasks with a given pipeline."""
