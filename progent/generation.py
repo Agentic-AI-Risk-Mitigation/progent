@@ -253,7 +253,7 @@ def generate_policies(
 
 
 def update_policies_from_result(
-    tool_call_params: dict,
+    tool_call_params: list[dict],
     tool_call_result: str,
     manual_confirm: bool = True,
 ) -> dict | None:
