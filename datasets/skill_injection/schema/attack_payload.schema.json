@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/evanchen/progent/datasets/skill_injection/schema/attack_payload.schema.json",
+  "title": "Progent SKILL.md Attack Payload",
+  "description": "Schema for attack payload files in the Progent SKILL.md Injection Attack Dataset.",
+  "type": "object",
+  "required": ["attack_class", "malicious_payloads", "benign_payloads"],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "attack_class": {
+      "type": "object",
+      "required": ["id", "name", "description", "techniques", "defense_layer"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[0-9]{2}_[a-z_]+$"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "techniques": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        },
+        "defense_layer": {
+          "type": "string"
+        },
+        "known_limitations": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "malicious_payloads": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/malicious_payload"
+      },
+      "minItems": 1
+    },
+    "benign_payloads": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/benign_payload"
+      },
+      "minItems": 1
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "malicious_payload": {
+      "type": "object",
+      "required": ["id", "tool_name", "kwargs", "expected_result", "severity", "description"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        },
+        "tool_name": {
+          "type": "string",
+          "enum": ["run_command", "read_file", "write_file", "edit_file", "send_email", "list_directory"]
+        },
+        "kwargs": {
+          "type": "object",
+          "minProperties": 1
+        },
+        "expected_result": {
+          "const": "blocked"
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["critical", "high", "medium"]
+        },
+        "description": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "benign_payload": {
+      "type": "object",
+      "required": ["id", "tool_name", "kwargs", "expected_result", "description"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        },
+        "tool_name": {
+          "type": "string",
+          "enum": ["run_command", "read_file", "write_file", "edit_file", "send_email", "list_directory"]
+        },
+        "kwargs": {
+          "type": "object",
+          "minProperties": 1
+        },
+        "expected_result": {
+          "const": "allowed"
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
