@@ -11,7 +11,7 @@ from progent import (
     check_tool_call,
     load_policies,
     reset_security_policy,
-    secure,
+    apply_secure_tool_wrapper,
     update_available_tools,
 )
 
@@ -59,12 +59,12 @@ class TestEndToEndWorkflow:
         load_policies(policies)
 
         # 3. Define and wrap tools
-        @secure
+        @apply_secure_tool_wrapper
         def send_email(to: str, subject: str, body: str) -> str:
             """Send an email."""
             return f"Email sent to {to}"
 
-        @secure
+        @apply_secure_tool_wrapper
         def read_file(path: str) -> str:
             """Read a file."""
             return f"Contents of {path}"
@@ -107,7 +107,7 @@ class TestEndToEndWorkflow:
             # Load from file
             load_policies(temp_path)
 
-            @secure
+            @apply_secure_tool_wrapper
             def calculator(operation: str, a: float, b: float) -> float:
                 """Perform calculation."""
                 if operation == "add":
@@ -157,7 +157,7 @@ class TestEndToEndWorkflow:
 
         load_policies(policies)
 
-        @secure
+        @apply_secure_tool_wrapper
         def action(path: str) -> str:
             """Perform action."""
             return f"Action on {path}"
@@ -225,7 +225,7 @@ class TestComplexRestrictions:
             }
         )
 
-        @secure
+        @apply_secure_tool_wrapper
         def create_user(username: str) -> str:
             """Create a user."""
             return f"Created {username}"
@@ -272,7 +272,7 @@ class TestComplexRestrictions:
             }
         )
 
-        @secure
+        @apply_secure_tool_wrapper
         def set_volume(level: int) -> str:
             """Set volume level."""
             return f"Volume set to {level}"
@@ -309,7 +309,7 @@ class TestComplexRestrictions:
             }
         )
 
-        @secure
+        @apply_secure_tool_wrapper
         def process_tags(tags: list) -> str:
             """Process tags."""
             return f"Processed {len(tags)} tags"
