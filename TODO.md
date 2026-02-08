@@ -9,7 +9,7 @@
 | **ADK Agent** | `implementations/frameworks/adk_agent.py` | Less tested than LangChain |
 | **Raw SDK Agent** | `implementations/frameworks/raw_sdk_agent.py` | Less tested than LangChain |
 | **Z3 Regex Conversion** | `progent/analysis.py` | Complex regex-to-Z3 may fail on edge cases (actually we can discuss using a different language for policy definition) |
-| **Policy Type Checking** | `progent/validation.py` | Missing: validation against `available_tools_dict`, full JSON Schema structure checks (secagent/policy_type_check.py is more comprehensive) |
+| **Policy Type Checking** | `progent/validation.py` | **IMPROVED**: Added `validate_policy_against_tools` for deep validation against tool definitions. |
 
 ## Not Working / Untested
 
@@ -30,12 +30,12 @@
 
 ## Improvements Needed
 
-- [ ] **Better error messages** - When policy blocks, explain why clearly
-- [ ] **Policy debugging tool / traceability** - "Why was this call blocked?"
+- [x] **Better error messages** - When policy blocks, explain why clearly (added `policy_rule` and `failed_condition` to `ProgentBlockedError`)
+- [x] **Policy debugging tool / traceability** - "Why was this call blocked?" (Implemented `progent/cli.py`)
 - [ ] **Policy conflict detection UI** - Make Z3 analysis accessible
 - [ ] **Documentation** - API reference for `progent` library
 
-- [ ] `implementations/core/progent_enforcer.py` duplicates some logic from `progent/core.py`
+- [x] `implementations/core/progent_enforcer.py` duplicates some logic from `progent/core.py` (Refactored to use `progent.registry`)
 - [ ] Logging is scattered - could be centralized
 - [x] No CI/CD pipeline for running tests (`.github/workflows/ci.yml`)
 

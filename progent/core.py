@@ -217,7 +217,7 @@ def _check_tool_call_impl(
 
             except PolicyValidationError as e:
                 # This allow rule doesn't match, record why and try next rule
-                failed_reasons.append(str(e))
+                failed_reasons.append(f"Policy (priority {priority}) skipped: {str(e)}")
                 continue
 
         elif effect == 1:  # Deny rule
@@ -228,7 +228,13 @@ def _check_tool_call_impl(
                         check_argument(arg_name, kwargs[arg_name], restriction)
 
                 # All conditions matched - tool is blocked
-                _handle_block(tool_name, kwargs, fallback)
+                _handle_block(
+                    tool_name,
+                    kwargs,
+                    fallback,
+                    policy_rule=policy,
+                    failed_condition=f"Matched deny rule: {conditions}",
+                )
 
             except PolicyValidationError:
                 # Deny rule doesn't match, continue
@@ -236,7 +242,7 @@ def _check_tool_call_impl(
 
     # No rule matched - block by default
     if failed_reasons:
-        reason = f"Tool '{tool_name}' blocked: " + "; ".join(failed_reasons)
+        reason = f"Tool '{tool_name}' blocked. No matching allow rule found. Reasons:\n- " + "\n- ".join(failed_reasons)
     else:
         reason = f"Tool '{tool_name}' blocked: no policy rule matched the provided arguments."
 
@@ -251,12 +257,16 @@ def _handle_block(
     tool_name: str,
     kwargs: dict[str, Any],
     fallback: int,
+    policy_rule: tuple | None = None,
+    failed_condition: str | None = None,
 ) -> None:
     """Handle a blocked tool call based on fallback setting."""
     if fallback == 0:  # Return error message
         raise ProgentBlockedError(
             tool_name=tool_name,
             arguments=kwargs,
+            policy_rule=policy_rule,
+            failed_condition=failed_condition,
         )
     elif fallback == 1:  # Terminate
         sys.exit(1)
@@ -272,11 +282,15 @@ def _handle_block(
                 tool_name=tool_name,
                 arguments=kwargs,
                 reason="Tool call rejected by user.",
+                policy_rule=policy_rule,
+                failed_condition=failed_condition,
             )
     else:
         raise ProgentBlockedError(
             tool_name=tool_name,
             arguments=kwargs,
+            policy_rule=policy_rule,
+            failed_condition=failed_condition,
         )
 
 

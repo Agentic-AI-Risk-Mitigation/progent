@@ -57,7 +57,8 @@ progent/                          # PROGENT SDK (pip-installable library)
 ├── generation.py                 # LLM policy generation (optional) (not fully functional and not tested)
 └── adapters/
     ├── langchain.py              # LangChain integration
-    └── mcp.py                    # MCP middleware
+    ├── mcp.py                    # MCP middleware
+    └── registry.py               # Tool registration and enforcement (New!)
 
 tests/                            # SDK tests
 └── test_progent/
@@ -96,6 +97,9 @@ secagent/                         # Original implementation (reference only)
 
 `progent/` is a **Python library** (SDK) that provides the core Progent policy engine:
 - Framework-agnostic policy enforcement (`check_tool_call`, `@secure`)
+- **[New]** Auto-enforcing `ProgentRegistry` pattern
+- **[New]** Deep Policy Validation against tool definitions
+- **[New]** Detailed error reporting for debugging blocked calls
 - JSON Schema-based argument validation
 - Optional adapters (LangChain, MCP)
 - Optional analysis/generation modules

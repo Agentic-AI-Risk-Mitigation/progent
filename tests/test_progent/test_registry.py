@@ -16,7 +16,8 @@ def test_registry_registration_and_enforcement():
     from progent.core import update_security_policy
     policy = {
         "sensitive_tool": [
-            (1, 1, {"user": "admin"}, 0) # Deny admin
+            (1, 1, {"user": "admin"}, 0), # Deny admin
+            (2, 0, {}, None)              # Allow everyone else
         ]
     }
     update_security_policy(policy)

@@ -116,69 +116,21 @@ def wrap_tool_with_enforcement(func: Callable, tool_name: str) -> Callable:
     return wrapper
 
 
-class ProgentEnforcedRegistry:
+from progent.registry import ProgentRegistry
+
+
+class ProgentEnforcedRegistry(ProgentRegistry):
     """
-    A tool registry that automatically enforces Progent policies.
+    A tool registry that automatically enforces Progent policies
+    and logs actions using the agent logger.
     """
 
     def __init__(self, policies_path: str | Path):
-        self.policies_path = Path(policies_path)
-        self._tools: dict[str, Callable] = {}
-        self._tool_definitions: list[dict[str, Any]] = []
-        self._initialized = False
+        super().__init__(policies_path=policies_path)
 
-    def register(
-        self, func: Callable, name: Optional[str] = None, description: Optional[str] = None
-    ) -> Callable:
-        """Register a tool with automatic policy enforcement."""
-        tool_name = name or func.__name__
-        tool_desc = description or (func.__doc__ or "").strip().split("\n")[0]
+    def _wrap_tool(self, func: Callable, tool_name: str) -> Callable:
+        """
+        Wrap tool with the logging-enabled enforcement wrapper.
+        """
+        return wrap_tool_with_enforcement(func, tool_name)
 
-        # Store the wrapped function
-        wrapped = wrap_tool_with_enforcement(func, tool_name)
-        self._tools[tool_name] = wrapped
-
-        # Build tool definition for Progent
-        import inspect
-
-        sig = inspect.signature(func)
-        params = {}
-        for pname, param in sig.parameters.items():
-            params[pname] = {"type": "string", "description": f"The {pname} parameter"}
-
-        self._tool_definitions.append(
-            {
-                "name": tool_name,
-                "description": tool_desc,
-                "args": params,
-            }
-        )
-
-        return wrapped
-
-    def initialize(self) -> None:
-        """Initialize Progent with registered tools and policies."""
-        if self._initialized:
-            return
-
-        init_progent(self.policies_path, self._tool_definitions)
-        self._initialized = True
-
-    def get_tool(self, name: str) -> Optional[Callable]:
-        """Get a tool by name."""
-        return self._tools.get(name)
-
-    def get_all_tools(self) -> dict[str, Callable]:
-        """Get all registered tools."""
-        return self._tools.copy()
-
-    def execute(self, name: str, **kwargs) -> Any:
-        """Execute a tool by name."""
-        if not self._initialized:
-            self.initialize()
-
-        tool = self._tools.get(name)
-        if tool is None:
-            raise ValueError(f"Unknown tool: {name}")
-
-        return tool(**kwargs)
