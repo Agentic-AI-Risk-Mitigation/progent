@@ -31,7 +31,7 @@
 
 - [x] **Better error messages** - When policy blocks, explain why clearly (added `policy_rule` and `failed_condition` to `ProgentBlockedError`)
 - [x] **Policy debugging tool / traceability** - "Why was this call blocked?" (Implemented `progent/cli.py`)
-- [ ] **Policy conflict detection UI** - Make Z3 analysis accessible
+- [x] **Policy conflict detection UI** - Make Z3 analysis accessible
 - [ ] **Documentation** - API reference for `progent` library
 
 - [x] `implementations/core/progent_enforcer.py` duplicates some logic from `progent/core.py` (Refactored to use `progent.registry`)
