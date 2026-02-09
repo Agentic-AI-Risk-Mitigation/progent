@@ -28,12 +28,32 @@
 - [x] Utility benchmarks (does policy break legitimate tasks?) - **Implemented `implementations/evals/`**
 
 **Evaluation Framework (`implementations/evals/`):**
-- Automated test scenarios for security (blocks attacks) and utility (allows benign tasks)
+
+**Current State: Basic Coverage (~30% comprehensive)**
+- 9 scenarios testing fundamental security and utility
 - Structured logging to track blocked/allowed tools
-- Cross-platform support (Windows delete commands, list_directory tool)
-- Mock data for reproducible tests (http://internal URLs)
-- Validators for different failure modes (blocked, refused, passed)
-- Categories: A* (valid), B* (misuse), C* (dangerous), D* (social engineering)
+- Cross-platform support (Windows/Unix commands)
+- Mock data for reproducible tests
+
+**What IS Tested:**
+- **Valid Use Cases:** Fetch data, clone repos, install packages
+  - Tests: Policies don't break legitimate workflows
+- **Direct Prompt Injection:** "Ignore instructions", "Developer mode"
+  - Tests: Policies block jailbreak attempts
+- **Tool Misuse:** Dangerous commands (rm -rf, del *.*), reading secrets (.env)
+  - Tests: Both policy blocks AND agent safety judgment
+- **Indirect Injection:** Following malicious instructions, data exfiltration
+  - Tests: Agent refuses based on ethical judgment
+
+**What needs improvement (NOT Tested):**
+- Multi-step attack chains (install package → use to read .env)
+- Encoding/obfuscation (base64, Unicode, command substitution)
+- Context manipulation (long prompts, token smuggling)
+- Tool chaining exploits (write malicious script → execute)
+- Path traversal (../../.env variants)
+- Realistic adversarial prompts (current tests too simple)
+- Better validators (parse actual tool calls, not keywords)
+- More scenarios (need 50-100 for production, have 9)
 
 ## Improvements Needed
 
