@@ -33,7 +33,7 @@ def main():
     check_parser.add_argument("--args", "-a", required=True, help="JSON string of arguments")
 
     # Analyze command
-    # analyze_parser = subparsers.add_parser("analyze", help="Analyze policy for conflicts", parents=[parent_parser]) # unused variable !
+    analyze_parser = subparsers.add_parser("analyze", help="Analyze policy for conflicts", parents=[parent_parser]) # unused variable !
 
     args = parser.parse_args()
 
