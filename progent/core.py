@@ -10,6 +10,10 @@ from typing import Any, TypedDict
 from progent.exceptions import PolicyValidationError, ProgentBlockedError
 from progent.validation import check_argument
 
+from progent.logger import get_logger
+
+_logger = get_logger()
+
 # =============================================================================
 # Global State
 # =============================================================================
@@ -173,15 +177,22 @@ def check_tool_call(tool_name: str, kwargs: dict[str, Any]) -> None:
         return
 
     policies = _security_policy.get(tool_name)
+    _logger.tool_call(tool_name, kwargs)
 
     if policies is None or len(policies) == 0:
+        _logger.progent_decision(tool_name, allowed=False, reason="Tool not in allowlist")
         raise ProgentBlockedError(
             tool_name=tool_name,
             arguments=kwargs,
             reason=f"Tool '{tool_name}' is not in the allowed tools list.",
         )
 
-    _check_tool_call_impl(tool_name, kwargs, policies)
+    try:
+        _check_tool_call_impl(tool_name, kwargs, policies)
+        _logger.progent_decision(tool_name, allowed=True)
+    except ProgentBlockedError as e:
+        _logger.progent_decision(tool_name, allowed=False, reason=e.reason)
+        raise e
 
 
 def _check_tool_call_impl(

@@ -16,6 +16,9 @@ from progent.core import (
     update_security_policy,
 )
 from progent.policy import load_policies
+from progent.logger import get_logger
+
+_logger = get_logger()
 
 
 class ToolDefinition(TypedDict):
@@ -96,6 +99,7 @@ class ProgentRegistry:
             }
         )
 
+        _logger.info(f"Registered tool: {tool_name}")
         return func
 
     def load_policies_from_file(self, policies_path: str | Path) -> None:

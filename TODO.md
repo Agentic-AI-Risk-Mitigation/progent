@@ -23,8 +23,7 @@
 
 - [x] Integration tests for full agent loop (user prompt → tool call → policy check → result)
 - [x] Tests for `progent/generation.py` (Implemented `tests/test_progent/test_generation.py`)
-- [ ] Tests for `progent/adapters/mcp.py` with real MCP server
-- [ ] Tests for `progent/adapters/langchain.py`
+- [x] Tests for `progent/adapters/mcp.py` and `progent/adapters/langchain.py` (Added mock tests)
 - [ ] Security benchmarks (does policy actually block attacks?)
 - [ ] Utility benchmarks (does policy break legitimate tasks?)
 
@@ -36,6 +35,6 @@
 - [ ] **Documentation** - API reference for `progent` library
 
 - [x] `implementations/core/progent_enforcer.py` duplicates some logic from `progent/core.py` (Refactored to use `progent.registry`)
-- [ ] Logging is scattered - could be centralized
+- [x] Logging is scattered - could be centralized (Implemented `progent/logger.py`)
 - [x] No CI/CD pipeline for running tests (`.github/workflows/ci.yml`)
 

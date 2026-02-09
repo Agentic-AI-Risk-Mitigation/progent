@@ -13,6 +13,10 @@ import os
 import sys
 from typing import Any
 
+from progent.logger import get_logger
+
+_logger = get_logger()
+
 from progent.core import (
     get_available_tools,
     get_security_policy,
@@ -220,13 +224,14 @@ def generate_policies(
             generated = _extract_json(response)
 
             if manual_confirm:
+                # Still using print for interactive confirmation as this is a CLI interaction pattern
                 print(
                     f"Generated policy: {json.dumps(generated, indent=2)}\nApply? [y/N]: ",
                     end="",
                     flush=True,
                 )
                 if input().strip().lower() != "y":
-                    print("Policy discarded.", file=sys.stderr)
+                    _logger.info("Policy generation discarded by user.")
                     return {}
 
             # Convert to internal format and apply
@@ -310,7 +315,7 @@ def update_policies_from_result(
                     flush=True,
                 )
                 if input().strip().lower() != "y":
-                    print("Policy discarded.", file=sys.stderr)
+                    _logger.info("Policy update discarded by user.")
                     return None
 
             policies = _convert_generated_policies(generated)

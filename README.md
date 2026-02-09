@@ -59,6 +59,8 @@ progent/                          # PROGENT SDK (pip-installable library)
     ├── langchain.py              # LangChain integration
     ├── mcp.py                    # MCP middleware
     └── registry.py               # Tool registration and enforcement (New!)
+├── logger.py                     # Centralized logging (New!)
+├── cli.py                        # Policy debugging CLI (New!)
 
 tests/                            # SDK tests
 └── test_progent/
