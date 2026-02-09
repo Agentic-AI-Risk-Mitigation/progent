@@ -41,9 +41,9 @@ try:
 except ImportError:
     CLAUDE_SDK_AVAILABLE = False
 
-from core.progent_enforcer import enforce_policy, init_progent
-from core.tool_definitions import TOOL_DEFINITIONS
-from frameworks.base_agent import BaseAgent
+from implementations.core.progent_enforcer import enforce_policy, init_progent
+from implementations.core.tool_definitions import TOOL_DEFINITIONS
+from implementations.frameworks.base_agent import BaseAgent
 
 # Default tools Claude Code can use
 DEFAULT_ALLOWED_TOOLS = [

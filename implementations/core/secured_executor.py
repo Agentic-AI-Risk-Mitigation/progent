@@ -11,9 +11,9 @@ DO NOT implement policy enforcement in individual agent files.
 
 from typing import Callable
 
-from core.logging_utils import get_logger
-from core.progent_enforcer import enforce_policy
-from core.tool_definitions import ToolDefinition
+from implementations.core.logging_utils import get_logger
+from implementations.core.progent_enforcer import enforce_policy
+from implementations.core.tool_definitions import ToolDefinition
 
 
 def create_secured_handler(tool_def: ToolDefinition) -> Callable:

@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any
 
-from core.logging_utils import get_logger
+from implementations.core.logging_utils import get_logger
 
 
 class BaseAgent(ABC):
@@ -31,7 +31,7 @@ class BaseAgent(ABC):
         self.logger = get_logger()
 
         # Initialize workspace for tools
-        from tools.file_tools import set_workspace
+        from implementations.tools.file_tools import set_workspace
 
         set_workspace(self.workspace)
 

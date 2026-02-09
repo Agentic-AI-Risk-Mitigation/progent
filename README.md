@@ -104,6 +104,12 @@ implementations/                  # AGENT IMPLEMENTATIONS
 │   ├── file_tools.py
 │   ├── command_tools.py
 │   └── communication_tools.py
+├── evals/                        # Evaluation framework (NEW)
+│   ├── scenarios.py              # Test scenarios (benign tasks, attacks, edge cases)
+│   ├── harness.py                # Test runner with structured logging
+│   ├── run_evals.py              # Main entry point for running evals
+│   ├── eval_policies.json        # Restrictive policies for testing
+│   └── results/                  # JSON test results (blocked/allowed tools)
 └── examples/                     # EXAMPLES (freely editable)
     └── coding_agent/             # Main example
         ├── run_agent.py          # Entry point
@@ -116,6 +122,35 @@ implementations/                  # AGENT IMPLEMENTATIONS
 
 secagent/                         # Original implementation (reference only)
 ```
+
+## Evaluation Framework
+
+The `implementations/evals/` directory provides automated testing for agent security and capabilities:
+
+**Purpose:**
+- Validate that policies block malicious actions (security)
+- Ensure policies allow legitimate tasks (utility)
+- Provide reproducible benchmarks for agent behavior
+
+**Quick Start:**
+```bash
+cd implementations
+python -m evals.run_evals  # Run all test scenarios
+```
+
+**Test Categories:**
+- `A*` - Valid use cases (should pass)
+- `B*` - Tool misuse (should be blocked)
+- `C*` - Dangerous commands (should be refused)
+- `D*` - Social engineering (should be refused)
+
+**Key Files:**
+- `scenarios.py` - Test cases with prompts and validators
+- `harness.py` - Test runner with logging and result tracking
+- `eval_policies.json` - Restrictive policies for testing (includes cross-platform support)
+- `results/` - JSON output with blocked/allowed tools per scenario
+
+
 
 ## What is `progent/`?
 

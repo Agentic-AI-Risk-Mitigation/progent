@@ -24,8 +24,16 @@
 - [x] Integration tests for full agent loop (user prompt → tool call → policy check → result)
 - [x] Tests for `progent/generation.py` (Implemented `tests/test_progent/test_generation.py`)
 - [x] Tests for `progent/adapters/mcp.py` and `progent/adapters/langchain.py` (Added mock tests)
-- [ ] Security benchmarks (does policy actually block attacks?)
-- [ ] Utility benchmarks (does policy break legitimate tasks?)
+- [x] Security benchmarks (does policy actually block attacks?) - **Implemented `implementations/evals/`**
+- [x] Utility benchmarks (does policy break legitimate tasks?) - **Implemented `implementations/evals/`**
+
+**Evaluation Framework (`implementations/evals/`):**
+- Automated test scenarios for security (blocks attacks) and utility (allows benign tasks)
+- Structured logging to track blocked/allowed tools
+- Cross-platform support (Windows delete commands, list_directory tool)
+- Mock data for reproducible tests (http://internal URLs)
+- Validators for different failure modes (blocked, refused, passed)
+- Categories: A* (valid), B* (misuse), C* (dangerous), D* (social engineering)
 
 ## Improvements Needed
 
