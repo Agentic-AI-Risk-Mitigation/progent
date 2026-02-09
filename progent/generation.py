@@ -12,6 +12,13 @@ import json
 import os
 from typing import Any
 
+# Load .env file if available
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 from progent.core import (
     get_available_tools,
     get_security_policy,
@@ -142,9 +149,16 @@ def _api_request(
             "openai is required for OpenAI models. Install with: pip install progent[generation]"
         )
 
+    # OpenRouter (OpenAI-compatible API)
+    if os.getenv("OPENROUTER_API_KEY"):
+        client = OpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=os.getenv("OPENROUTER_API_KEY"),
+        )
     # Local models via vLLM
-    if model.startswith("meta-llama/") or model.startswith("Qwen/"):
+    elif model.startswith("meta-llama/") or model.startswith("Qwen/"):
         client = OpenAI(base_url="http://127.0.0.1:8000/v1", api_key="EMPTY")
+    # Standard OpenAI
     else:
         client = OpenAI()
 
