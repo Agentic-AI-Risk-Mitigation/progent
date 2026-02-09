@@ -23,9 +23,6 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 
-[project.scripts]
-progent = "progent.cli:main"
-
 # Core dependencies - minimal for basic policy enforcement
 dependencies = [
     "jsonschema>=4.0",
@@ -37,6 +34,9 @@ dependencies = [
     "langchain-core>=0.3.0,<0.4.0",
     "langchain-openai>=0.2.0,<0.3.0",
 ]
+
+[project.scripts]
+progent = "progent.cli:main"
 
 [project.optional-dependencies]
 # Z3-based policy analysis

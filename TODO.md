@@ -10,12 +10,12 @@
 | **Raw SDK Agent** | `implementations/frameworks/raw_sdk_agent.py` | Less tested than LangChain |
 | **Z3 Regex Conversion** | `progent/analysis.py` | Complex regex-to-Z3 may fail on edge cases (actually we can discuss using a different language for policy definition) |
 | **Policy Type Checking** | `progent/validation.py` | **IMPROVED**: Added `validate_policy_against_tools` for deep validation against tool definitions. |
+| **LLM Policy Generation** | `progent/generation.py` | Working, but needs more testing and integration into agent loop |
 
 ## Not Working / Untested
 
 | Area | File | Issue |
 |------|------|-------|
-| **LLM Policy Generation** | `progent/generation.py` | Not tested, not integrated into agent loop |
 | **State/History Tracking** | N/A | Not implemented - policies are stateless, no conditional rules like "if tool A used, block tool B" (This is not a feature of Progent) |
 | **Declarative Policy Updates** | `progent/core.py` | The `"update"` field in policy rules is not implemented |
 

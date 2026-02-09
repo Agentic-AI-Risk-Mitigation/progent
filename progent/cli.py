@@ -19,7 +19,7 @@ logger = get_logger()
 def main():
     # Common arguments parser
     parent_parser = argparse.ArgumentParser(add_help=False)
-    parent_parser.add_argument("--policy", "-p", required=True, help="Path to policy JSON file")
+    parent_parser.add_argument("--policy", "-p", help="Path to policy JSON file (not needed for generate command)")
     parent_parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose output")
     parent_parser.add_argument("--log-level", "-l", help="Set logging level (DEBUG, INFO, WARNING, ERROR)", default=None)
 
@@ -33,7 +33,13 @@ def main():
     check_parser.add_argument("--args", "-a", required=True, help="JSON string of arguments")
 
     # Analyze command
-    analyze_parser = subparsers.add_parser("analyze", help="Analyze policy for conflicts", parents=[parent_parser]) # unused variable !
+    analyze_parser = subparsers.add_parser("analyze", help="Analyze policy for conflicts", parents=[parent_parser])  # noqa: F841
+
+    # Generate command
+    generate_parser = subparsers.add_parser("generate", help="Generate policy from user query", parents=[parent_parser])
+    generate_parser.add_argument("--query", "-q", required=True, help="User query/task description")
+    generate_parser.add_argument("--manual-check", "-m", action="store_true", help="Manually approve generated policy")
+    generate_parser.add_argument("--model", help="LLM model to use (overrides PROGENT_POLICY_MODEL env var)")
 
     args = parser.parse_args()
 
@@ -41,23 +47,27 @@ def main():
     level = "DEBUG" if args.verbose else args.log_level
     configure_logging(level=level)
 
-    # Load Policy
-    policy_path = Path(args.policy)
-    if not policy_path.exists():
-        logger.error(f"Policy file not found: {policy_path}")
-        sys.exit(1)
+    # Load Policy (not needed for generate command)
+    if args.command != "generate":
+        policy_path = Path(args.policy)
+        if not policy_path.exists():
+            logger.error(f"Policy file not found: {policy_path}")
+            sys.exit(1)
 
-    try:
-        with open(policy_path, "r") as f:
-            policy = json.load(f)
-    except json.JSONDecodeError as e:
-        logger.error(f"Invalid JSON in policy file: {e}")
-        sys.exit(1)
+        try:
+            with open(policy_path, "r") as f:
+                policy = json.load(f)
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid JSON in policy file: {e}")
+            sys.exit(1)
 
 
 
-    # Initialize Progent
-    update_security_policy(policy)
+        # Initialize Progent
+        update_security_policy(policy)
+    else:
+        # For generate command, we don't need a policy file
+        policy_path = Path(args.policy) if args.policy else None
 
     if args.command == "analyze":
         try:
@@ -80,6 +90,38 @@ def main():
              for w in all_warnings:
                  print(f" - {w}")
              sys.exit(1)
+
+    elif args.command == "generate":
+        try:
+            from progent.generation import generate_policies, set_policy_model
+        except ImportError:
+            logger.error("Generation module requires 'progent[generation]'. pip install progent[generation]")
+            sys.exit(1)
+
+        if args.model:
+            set_policy_model(args.model)
+
+        logger.info(f"Generating policy for query: {args.query}")
+
+        try:
+            generated = generate_policies(
+                query=args.query,
+                manual_confirm=args.manual_check,
+            )
+
+            if generated:
+                print(f"\n✅ Policy generated for {len(generated)} tools:")
+                for tool_name in generated.keys():
+                    print(f"   - {tool_name}")
+                print("\nPolicy has been applied to the current session.")
+                print(f"To persist, save to file: {policy_path}")
+            else:
+                print("\n⚠️  No policy generated (user cancelled or no tools matched).")
+
+            sys.exit(0)
+        except Exception as e:
+            logger.error(f"Policy generation failed: {e}")
+            sys.exit(1)
 
     # Tool Execution Check
     if args.command == "check":

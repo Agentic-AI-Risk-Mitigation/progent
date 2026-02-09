@@ -42,6 +42,28 @@ cp env.template .env
 python run_agent.py
 ```
 
+## Configuration (.env)
+
+Create a `.env` file in the project root with your API keys:
+
+```bash
+# Required: API key for LLM
+OPENROUTER_API_KEY=sk-or-v1-xxx  # Recommended - supports multiple models
+# OR
+OPENAI_API_KEY=sk-xxx
+# OR
+ANTHROPIC_API_KEY=sk-ant-xxx
+
+# Optional: LLM Policy Generation
+PROGENT_POLICY_MODEL=openai/gpt-4o-mini  # Model for auto-generating policies
+```
+
+**LLM Policy Generation**: Automatically generate security policies from user queries using an LLM. See `examples/llm_policy_generation.py` for usage.
+
+```bash
+python examples/test_generate.py
+```
+
 ## Repository Structure
 
 The idea for the repo structure is to have a progent/ sdk directory, which would be what we develop. secagent/ is the original implementation by the Progent authors which can be nice for reference (https://github.com/sunblaze-ucb/progent/tree/main). implementations/ is what a developer using our progent library would create. Feel free to propose a better structure.
@@ -54,7 +76,7 @@ progent/                          # PROGENT SDK (pip-installable library)
 ├── validation.py                 # JSON Schema validation
 ├── wrapper.py                    # @secure decorator
 ├── analysis.py                   # Z3-based policy analysis (optional)
-├── generation.py                 # LLM policy generation (optional) (not fully functional and not tested)
+├── generation.py                 # LLM policy generation (optional) - NEW: OpenRouter support!
 └── adapters/
     ├── langchain.py              # LangChain integration
     ├── mcp.py                    # MCP middleware

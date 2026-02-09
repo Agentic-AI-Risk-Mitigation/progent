@@ -134,3 +134,50 @@ class TestGeneration:
         assert result is not None
         assert "read_file" in result
         mock_update.assert_called_once()
+
+    @patch("progent.generation._api_request")
+    @patch("progent.generation.get_user_query")
+    def test_update_policies_from_result_no(self, mock_query, mock_request):
+        """Test no update when LLM says No."""
+        mock_query.return_value = "Original query"
+        mock_request.return_value = "No"
+
+        result = update_policies_from_result(
+            tool_call_params={"path": "/tmp/test"},
+            tool_call_result="content",
+            manual_confirm=False
+        )
+
+        assert result is None
+
+    def test_priority_system(self):
+        """Test that generated policies use priority 100."""
+        from progent.generation import _convert_generated_policies, _delete_generated_policies
+
+        generated = [{"name": "tool1", "args": {"param": "value"}}]
+        policies = _convert_generated_policies(generated)
+
+        assert policies["tool1"][0][0] == 100
+
+        # Test delete removes only generated
+        mixed_policy = {
+            "tool1": [(1, 0, {}, 0), (100, 0, {}, 0)],  # human + generated
+            "tool2": [(100, 0, {}, 0)]  # only generated
+        }
+
+        _delete_generated_policies(mixed_policy)
+
+        assert len(mixed_policy["tool1"]) == 1
+        assert mixed_policy["tool1"][0][0] == 1
+        assert "tool2" not in mixed_policy
+
+    def test_token_tracking(self):
+        """Test token usage tracking."""
+        from progent.generation import get_token_usage, reset_token_usage
+
+        reset_token_usage()
+        usage = get_token_usage()
+
+        assert usage["completion_tokens"] == 0
+        assert usage["prompt_tokens"] == 0
+        assert usage["total_tokens"] == 0
