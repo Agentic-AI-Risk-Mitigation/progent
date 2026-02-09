@@ -1,11 +1,13 @@
-import pytest
-import sys
 import json
-import tempfile
 import os
-from unittest.mock import patch, MagicMock
+import sys
+import tempfile
+from unittest.mock import patch
+
+import pytest
+
 from progent.cli import main
-from progent.exceptions import ProgentBlockedError
+
 
 class TestCLI:
     @pytest.fixture
@@ -63,16 +65,16 @@ class TestCLI:
 
     def test_analyze_no_conflicts(self, policy_file):
         # Create a clean policy (using the fixture's path, but we need to overwrite it or creating a new one)
-        # The fixture creates a policy. Let's just use a mocking approach for the analysis module 
+        # The fixture creates a policy. Let's just use a mocking approach for the analysis module
         # to avoid complex setup, or just trust the fixture policy if it has no conflicts.
         # The fixture policy has 1 rule per tool, so no overlap.
-        
+
         test_args = [
             "progent",
             "analyze",
             "--policy", policy_file
         ]
-        
+
         # Mock analysis to return empty list (no conflicts)
         with patch("progent.analysis.analyze_policies", return_value=[]), \
              patch("progent.analysis.check_policy_type_errors", return_value=[]):
@@ -87,7 +89,7 @@ class TestCLI:
             "analyze",
             "--policy", policy_file
         ]
-        
+
         # Mock analysis to return warnings
         with patch("progent.analysis.analyze_policies", return_value=["Conflict detected"]), \
              patch("progent.analysis.check_policy_type_errors", return_value=[]):

@@ -1,13 +1,14 @@
-import pytest
-from unittest.mock import patch, MagicMock
 import json
+from unittest.mock import patch
+
+import pytest
+
 from progent.generation import (
+    _convert_generated_policies,
+    _extract_json,
     generate_policies,
     update_policies_from_result,
-    _extract_json,
-    _convert_generated_policies
 )
-from progent.exceptions import ProgentError
 
 PROMPT_RESPONSE_JSON = """
 ```json
@@ -57,7 +58,7 @@ class TestGeneration:
         result = _extract_json(PLAIN_JSON_RESPONSE)
         assert isinstance(result, list)
         assert result[0]["name"] == "write_file"
-        
+
     def test_extract_json_yes_prefix(self):
         """Test extracting JSON with 'Yes' prefix."""
         text = "Yes " + PLAIN_JSON_RESPONSE
@@ -68,7 +69,7 @@ class TestGeneration:
         """Test converting generated list to internal policy dict."""
         generated = json.loads(PROMPT_RESPONSE_JSON.replace("```json", "").replace("```", ""))
         policies = _convert_generated_policies(generated)
-        
+
         assert "read_file" in policies
         rule = policies["read_file"][0]
         # Check rule format: (priority, effect, args, fallback)
@@ -87,11 +88,11 @@ class TestGeneration:
         mock_get_policy.return_value = {}
 
         policies = generate_policies("Read safe files")
-        
+
         assert "read_file" in policies
         mock_request.assert_called_once()
         mock_update.assert_called_once()
-        
+
         # Verify update was called with correct structure
         updated_policy = mock_update.call_args[0][0]
         assert "read_file" in updated_policy
@@ -106,7 +107,7 @@ class TestGeneration:
 
         with pytest.raises(RuntimeError, match="Policy generation failed"):
             generate_policies("Do something")
-            
+
         assert mock_request.call_count > 1
 
     @patch("progent.generation._api_request")
@@ -119,13 +120,13 @@ class TestGeneration:
         mock_query.return_value = "Original query"
         mock_get_tools.return_value = mock_tools
         mock_get_policy.return_value = {}
-        
+
         # First call (_should_update_policy) returns "Yes"
         # Second call returns JSON
         mock_request.side_effect = ["Yes", PROMPT_RESPONSE_JSON]
 
         result = update_policies_from_result(
-            tool_call_params={"path": "/tmp/test"}, 
+            tool_call_params={"path": "/tmp/test"},
             tool_call_result="content",
             manual_confirm=False
         )

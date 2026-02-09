@@ -3,9 +3,9 @@ import json
 import sys
 from pathlib import Path
 
-from progent.core import update_security_policy, check_tool_call
+from progent.core import check_tool_call, update_security_policy
 from progent.exceptions import ProgentBlockedError
-from progent.logger import get_logger, configure_logging
+from progent.logger import configure_logging, get_logger
 
 # Try to load .env file if available
 try:
@@ -33,7 +33,7 @@ def main():
     check_parser.add_argument("--args", "-a", required=True, help="JSON string of arguments")
 
     # Analyze command
-    analyze_parser = subparsers.add_parser("analyze", help="Analyze policy for conflicts", parents=[parent_parser])
+    # analyze_parser = subparsers.add_parser("analyze", help="Analyze policy for conflicts", parents=[parent_parser]) # unused variable !
 
     args = parser.parse_args()
 
@@ -53,7 +53,7 @@ def main():
     except json.JSONDecodeError as e:
         logger.error(f"Invalid JSON in policy file: {e}")
         sys.exit(1)
-    
+
 
 
     # Initialize Progent
@@ -65,9 +65,9 @@ def main():
         except ImportError:
             logger.error("Analysis module requires 'progent[analysis]'. pip install progent[analysis]")
             sys.exit(1)
-        
+
         logger.info(f"Analyzing policy: {policy_path}")
-        
+
         warnings = analysis.analyze_policies(policy)
         type_warnings = analysis.check_policy_type_errors(policy)
         all_warnings = warnings + type_warnings

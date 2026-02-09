@@ -8,9 +8,8 @@ import sys
 from typing import Any, TypedDict
 
 from progent.exceptions import PolicyValidationError, ProgentBlockedError
-from progent.validation import check_argument
-
 from progent.logger import get_logger
+from progent.validation import check_argument
 
 _logger = get_logger()
 

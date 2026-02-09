@@ -2,10 +2,10 @@
 Centralized logging for Progent.
 """
 
+import json
 import logging
 import os
 import sys
-import json
 from typing import Any, Optional
 
 # Default level from env, default to INFO
@@ -41,7 +41,7 @@ class ProgentLogger:
 
     def progent_decision(self, tool_name: str, allowed: bool, reason: str = ""):
         """
-        Log a policy decision. 
+        Log a policy decision.
         Allowed = INFO
         Blocked = WARNING (to make it visible in production if level >= WARNING)
         """
@@ -49,7 +49,7 @@ class ProgentLogger:
         msg = f"DECISION: {status} tool={tool_name}"
         if reason:
             msg += f" reason={reason}"
-        
+
         if allowed:
              self.logger.info(msg)
         else:
@@ -67,7 +67,6 @@ def get_logger() -> ProgentLogger:
 def configure_logging(level: Optional[str] = None, log_file: Optional[str] = None):
     """
     Configure the progent logger handlers.
-    
     Args:
         level: Logging level (e.g. "DEBUG", "INFO", "WARNING"). Defaults to PROGENT_LOG_LEVEL env var.
         log_file: Optional path to write logs to file.
@@ -85,7 +84,7 @@ def configure_logging(level: Optional[str] = None, log_file: Optional[str] = Non
     formatter = logging.Formatter('[%(levelname)s] [progent] %(message)s')
     console.setFormatter(formatter)
     logger.addHandler(console)
-    
+
     # File Handler
     if log_file:
          fh = logging.FileHandler(log_file)

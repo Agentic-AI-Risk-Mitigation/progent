@@ -231,19 +231,19 @@ def validate_policy_against_tools(
             # Rule format: (priority, effect, conditions, fallback)
             if len(rule) < 3:
                 continue
-            
+
             conditions = rule[2]
-            
+
             for arg_name, restriction in conditions.items():
                 if arg_name not in tool_args:
                     warnings.append(
                         f"Policy Warning: Argument '{arg_name}' is not available for tool '{tool_name}'."
                     )
-                
+
                 if isinstance(restriction, dict):  # JSON Schema
                     # Validate schema structure
                     warnings.extend(validate_schema(restriction))
-                    
+
                     # Check for type-specific keyword misuse
                     from jsonschema.validators import validator_for
                     try:

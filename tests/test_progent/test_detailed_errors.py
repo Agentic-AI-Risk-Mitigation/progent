@@ -1,9 +1,11 @@
 import pytest
+
 from progent.core import (
     ProgentBlockedError,
     check_tool_call,
     update_security_policy,
 )
+
 
 def test_detailed_error_attributes():
     # Setup policy
@@ -17,7 +19,7 @@ def test_detailed_error_attributes():
     # Test
     with pytest.raises(ProgentBlockedError) as excinfo:
         check_tool_call("test_tool", {"arg1": "unsafe"})
-    
+
     # Verify detailed attributes
     assert excinfo.value.tool_name == "test_tool"
     assert excinfo.value.arguments == {"arg1": "unsafe"}
@@ -31,7 +33,7 @@ def test_no_matching_allow_rule_error():
     # If policy has logic: check_tool_call_impl iterates lists.
     # If Effect 0 (Allow) doesn't match, it continues.
     # If no rule matches at all, it raises ProgentBlockedError.
-    
+
     policy = {
         "test_tool_2": [
             (1, 0, {"arg1": "safe"}, 0)  # Allow only if arg1 is "safe"
@@ -42,7 +44,7 @@ def test_no_matching_allow_rule_error():
     # Test
     with pytest.raises(ProgentBlockedError) as excinfo:
         check_tool_call("test_tool_2", {"arg1": "unknown"})
-    
+
     # Verify message
     assert "No matching allow rule found" in str(excinfo.value.reason)
     assert "value 'unknown' does not match pattern 'safe'" in str(excinfo.value.reason) or \

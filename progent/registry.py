@@ -10,13 +10,12 @@ from pathlib import Path
 from typing import Any, Callable, Optional, TypedDict
 
 from progent.core import (
-    ProgentBlockedError,
     check_tool_call,
     update_available_tools,
     update_security_policy,
 )
-from progent.policy import load_policies
 from progent.logger import get_logger
+from progent.policy import load_policies
 
 _logger = get_logger()
 
@@ -44,7 +43,7 @@ class ProgentRegistry:
         self._tools: dict[str, Callable] = {}
         self._tool_definitions: list[ToolDefinition] = []
         self._initialized = False
-        
+
         if policies_path:
             self.load_policies_from_file(policies_path)
 
@@ -56,7 +55,6 @@ class ProgentRegistry:
     ) -> Callable:
         """
         Register a tool definition.
-        
         NOTE: This does NOT wrap the function yet. The wrapping happens
         when you retrieve the tool or execute it, ensuring the latest
         policies are applied.
@@ -80,15 +78,15 @@ class ProgentRegistry:
                 "type": "string",
                 "description": f"The {pname} parameter"
             }
-            if param.annotation == int:
+            if param.annotation is int:
                 params[pname]["type"] = "integer"
-            elif param.annotation == float:
+            elif param.annotation is float:
                 params[pname]["type"] = "number"
-            elif param.annotation == bool:
+            elif param.annotation is bool:
                 params[pname]["type"] = "boolean"
-            elif param.annotation == list:
+            elif param.annotation is list:
                 params[pname]["type"] = "array"
-            elif param.annotation == dict:
+            elif param.annotation is dict:
                 params[pname]["type"] = "object"
 
         self._tool_definitions.append(
@@ -110,7 +108,7 @@ class ProgentRegistry:
     def initialize(self) -> None:
         """
         Finalize registration and update Progent core.
-        
+
         This pushes the tool definitions to progent.core so validation
         and generation can work correctly.
         """
@@ -125,7 +123,7 @@ class ProgentRegistry:
         func = self._tools.get(name)
         if func is None:
             return None
-        
+
         return self._wrap_tool(func, name)
 
     def get_all_tools(self) -> dict[str, Callable]:
@@ -148,21 +146,21 @@ class ProgentRegistry:
 
     def _wrap_tool(self, func: Callable, tool_name: str) -> Callable:
         """Internal method to wrap a tool with policy check."""
-        
+
         def wrapper(*args, **kwargs):
             # 1. Map args to kwargs if necessary (simple version)
             # For now, we assume tools are called with kwargs as per agent convention
             # If args are present, we might loose policy check on them if logic depends on kwargs
-            
+
             # 2. Check policy
             # Note: This raises ProgentBlockedError on failure
             check_tool_call(tool_name, kwargs)
-            
+
             # 3. Execute
             return func(*args, **kwargs)
 
         # Preserve metadata
         wrapper.__name__ = func.__name__
         wrapper.__doc__ = func.__doc__
-        
+
         return wrapper

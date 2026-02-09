@@ -10,12 +10,7 @@ This is an OPTIONAL module. It requires openai or anthropic to be installed:
 
 import json
 import os
-import sys
 from typing import Any
-
-from progent.logger import get_logger
-
-_logger = get_logger()
 
 from progent.core import (
     get_available_tools,
@@ -24,6 +19,9 @@ from progent.core import (
     set_user_query,
     update_security_policy,
 )
+from progent.logger import get_logger
+
+_logger = get_logger()
 
 # =============================================================================
 # Configuration

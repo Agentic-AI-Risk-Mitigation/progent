@@ -5,7 +5,7 @@ adding logging integration specific to this demo application.
 """
 
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 # Import from the new progent library
 from progent import (
@@ -16,6 +16,7 @@ from progent import (
 from progent import (
     load_policies as progent_load_policies,
 )
+from progent.registry import ProgentRegistry
 
 from .logging_utils import get_logger
 
@@ -114,10 +115,6 @@ def wrap_tool_with_enforcement(func: Callable, tool_name: str) -> Callable:
     wrapper.__annotations__ = getattr(func, "__annotations__", {})
 
     return wrapper
-
-
-from progent.registry import ProgentRegistry
-
 
 class ProgentEnforcedRegistry(ProgentRegistry):
     """

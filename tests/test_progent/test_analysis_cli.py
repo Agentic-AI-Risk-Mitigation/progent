@@ -1,12 +1,11 @@
 
-import pytest
-from unittest.mock import patch, MagicMock
-import sys
 import json
-import logging
+import sys
+from unittest.mock import patch
+
+import pytest
 
 from progent.cli import main
-from progent import analysis
 
 # Mock policy with conflict
 CONFLICT_POLICY = {
@@ -34,19 +33,19 @@ def policy_file(tmp_path):
 
 def test_analyze_no_conflicts(policy_file, capsys):
     p_path = policy_file(CLEAN_POLICY)
-    
+
     with patch.object(sys, 'argv', ["progent", "analyze", "--policy", p_path]):
         # Expect exit code 0
         with pytest.raises(SystemExit) as e:
             main()
         assert e.value.code == 0
-    
+
     captured = capsys.readouterr()
     assert "Policy looks good" in captured.out
 
 def test_analyze_with_conflicts(policy_file, capsys):
     p_path = policy_file(CONFLICT_POLICY)
-    
+
     # Mock analyze_policies to return a warning
     with patch("progent.analysis.analyze_policies", return_value=["Warning: Overlap detected"]):
          with patch.object(sys, 'argv', ["progent", "analyze", "--policy", p_path]):
@@ -54,20 +53,20 @@ def test_analyze_with_conflicts(policy_file, capsys):
             with pytest.raises(SystemExit) as e:
                 main()
             assert e.value.code == 1
-    
+
     captured = capsys.readouterr()
     assert "Found 1 issues" in captured.out
     assert "Warning: Overlap detected" in captured.out
 
 def test_check_command_allowed(policy_file, capsys):
     p_path = policy_file(CLEAN_POLICY)
-    
-    with patch("progent.cli.check_tool_call") as mock_check:
+
+    with patch("progent.cli.check_tool_call"):
         with patch.object(sys, 'argv', ["progent", "check", "--policy", p_path, "--tool", "t", "--args", "{}"]):
             with pytest.raises(SystemExit) as e:
                 main()
             assert e.value.code == 0
-            
+
     captured = capsys.readouterr()
     assert "ALLOWED" in captured.out
 
