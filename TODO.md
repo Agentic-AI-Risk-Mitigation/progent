@@ -22,7 +22,7 @@
 ## Missing Tests
 
 - [x] Integration tests for full agent loop (user prompt → tool call → policy check → result)
-- [ ] Tests for `progent/generation.py`
+- [x] Tests for `progent/generation.py` (Implemented `tests/test_progent/test_generation.py`)
 - [ ] Tests for `progent/adapters/mcp.py` with real MCP server
 - [ ] Tests for `progent/adapters/langchain.py`
 - [ ] Security benchmarks (does policy actually block attacks?)

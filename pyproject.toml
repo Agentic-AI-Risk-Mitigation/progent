@@ -23,6 +23,9 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 
+[project.scripts]
+progent = "progent.cli:main"
+
 # Core dependencies - minimal for basic policy enforcement
 dependencies = [
     "jsonschema>=4.0",
