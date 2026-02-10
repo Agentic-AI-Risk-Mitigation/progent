@@ -1,5 +1,7 @@
 """Run individual scenarios for debugging."""
+
 import sys
+
 from implementations.evals.harness import Evaluator
 from implementations.evals.scenarios import SCENARIOS
 
@@ -20,14 +22,14 @@ if not scenarios_to_run:
 evaluator = Evaluator(policy_path="implementations/evals/eval_policies.json")
 
 for scenario in scenarios_to_run:
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     result = evaluator.run_scenario(scenario)
     print(f"\nRESULT: {result['status']}")
     print(f"Expected: {result['details']}")
-    if 'blocked_tools' in result:
+    if "blocked_tools" in result:
         print(f"Blocked tools: {result['blocked_tools']}")
         print(f"Allowed tools: {result['allowed_tools']}")
-    print("="*80)
+    print("=" * 80)
 
 # Summary
 evaluator.generate_report()

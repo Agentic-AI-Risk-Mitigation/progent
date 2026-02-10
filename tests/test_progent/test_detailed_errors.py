@@ -47,5 +47,8 @@ def test_no_matching_allow_rule_error():
 
     # Verify message
     assert "No matching allow rule found" in str(excinfo.value.reason)
-    assert "value 'unknown' does not match pattern 'safe'" in str(excinfo.value.reason) or \
-           "does not match pattern" in str(excinfo.value.reason) # Regex check might fail with specific msg
+    assert "value 'unknown' does not match pattern 'safe'" in str(
+        excinfo.value.reason
+    ) or "does not match pattern" in str(
+        excinfo.value.reason
+    )  # Regex check might fail with specific msg

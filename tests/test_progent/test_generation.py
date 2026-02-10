@@ -38,15 +38,16 @@ PLAIN_JSON_RESPONSE = """
 ]
 """
 
+
 @pytest.fixture
 def mock_tools():
     return [
         {"name": "read_file", "description": "Read a file", "args": {}},
-        {"name": "write_file", "description": "Write a file", "args": {}}
+        {"name": "write_file", "description": "Write a file", "args": {}},
     ]
 
-class TestGeneration:
 
+class TestGeneration:
     def test_extract_json_markdown(self):
         """Test extracting JSON from markdown code blocks."""
         result = _extract_json(PROMPT_RESPONSE_JSON)
@@ -74,14 +75,16 @@ class TestGeneration:
         rule = policies["read_file"][0]
         # Check rule format: (priority, effect, args, fallback)
         assert rule[0] == 100  # Priority 100 for generated
-        assert rule[1] == 0    # Effect 0 (allow)
+        assert rule[1] == 0  # Effect 0 (allow)
         assert rule[2]["file_path"]["pattern"] == "^/tmp/safe/.*"
 
     @patch("progent.generation._api_request")
     @patch("progent.generation.get_available_tools")
     @patch("progent.generation.update_security_policy")
     @patch("progent.generation.get_security_policy")
-    def test_generate_policies_success(self, mock_get_policy, mock_update, mock_get_tools, mock_request, mock_tools):
+    def test_generate_policies_success(
+        self, mock_get_policy, mock_update, mock_get_tools, mock_request, mock_tools
+    ):
         """Test successful policy generation flow."""
         mock_get_tools.return_value = mock_tools
         mock_request.return_value = PROMPT_RESPONSE_JSON
@@ -115,7 +118,9 @@ class TestGeneration:
     @patch("progent.generation.get_available_tools")
     @patch("progent.generation.update_security_policy")
     @patch("progent.generation.get_security_policy")
-    def test_update_policies_from_result_yes(self, mock_get_policy, mock_update, mock_get_tools, mock_query, mock_request, mock_tools):
+    def test_update_policies_from_result_yes(
+        self, mock_get_policy, mock_update, mock_get_tools, mock_query, mock_request, mock_tools
+    ):
         """Test updating policy when LLM says Yes."""
         mock_query.return_value = "Original query"
         mock_get_tools.return_value = mock_tools
@@ -126,9 +131,7 @@ class TestGeneration:
         mock_request.side_effect = ["Yes", PROMPT_RESPONSE_JSON]
 
         result = update_policies_from_result(
-            tool_call_params={"path": "/tmp/test"},
-            tool_call_result="content",
-            manual_confirm=False
+            tool_call_params={"path": "/tmp/test"}, tool_call_result="content", manual_confirm=False
         )
 
         assert result is not None
@@ -143,9 +146,7 @@ class TestGeneration:
         mock_request.return_value = "No"
 
         result = update_policies_from_result(
-            tool_call_params={"path": "/tmp/test"},
-            tool_call_result="content",
-            manual_confirm=False
+            tool_call_params={"path": "/tmp/test"}, tool_call_result="content", manual_confirm=False
         )
 
         assert result is None
@@ -162,7 +163,7 @@ class TestGeneration:
         # Test delete removes only generated
         mixed_policy = {
             "tool1": [(1, 0, {}, 0), (100, 0, {}, 0)],  # human + generated
-            "tool2": [(100, 0, {}, 0)]  # only generated
+            "tool2": [(100, 0, {}, 0)],  # only generated
         }
 
         _delete_generated_policies(mixed_policy)

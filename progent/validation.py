@@ -246,6 +246,7 @@ def validate_policy_against_tools(
 
                     # Check for type-specific keyword misuse
                     from jsonschema.validators import validator_for
+
                     try:
                         validator = validator_for(restriction)
                         validator.check_schema(restriction)

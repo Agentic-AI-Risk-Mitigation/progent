@@ -11,10 +11,12 @@ from typing import Any, Optional
 # Default level from env, default to INFO
 DEFAULT_LOG_LEVEL = os.getenv("PROGENT_LOG_LEVEL", "INFO").upper()
 
+
 class ProgentLogger:
     """
     Wrapper around python standard logging to provide Progent-specific methods.
     """
+
     def __init__(self, name: str = "progent"):
         self.logger = logging.getLogger(name)
 
@@ -51,11 +53,13 @@ class ProgentLogger:
             msg += f" reason={reason}"
 
         if allowed:
-             self.logger.info(msg)
+            self.logger.info(msg)
         else:
-             self.logger.warning(msg)
+            self.logger.warning(msg)
+
 
 _logger: Optional[ProgentLogger] = None
+
 
 def get_logger() -> ProgentLogger:
     """Get the global Progent logger."""
@@ -63,6 +67,7 @@ def get_logger() -> ProgentLogger:
     if _logger is None:
         _logger = ProgentLogger()
     return _logger
+
 
 def configure_logging(level: Optional[str] = None, log_file: Optional[str] = None):
     """
@@ -77,17 +82,19 @@ def configure_logging(level: Optional[str] = None, log_file: Optional[str] = Non
     logger = logging.getLogger("progent")
     logger.setLevel(level)
     logger.handlers.clear()
-    logger.propagate = False # Do not propagate to root logger to avoid duplicates if app uses basicConfig
+    logger.propagate = (
+        False  # Do not propagate to root logger to avoid duplicates if app uses basicConfig
+    )
 
     # Console Handler
     console = logging.StreamHandler(sys.stdout)
-    formatter = logging.Formatter('[%(levelname)s] [progent] %(message)s')
+    formatter = logging.Formatter("[%(levelname)s] [progent] %(message)s")
     console.setFormatter(formatter)
     logger.addHandler(console)
 
     # File Handler
     if log_file:
-         fh = logging.FileHandler(log_file)
-         file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-         fh.setFormatter(file_formatter)
-         logger.addHandler(fh)
+        fh = logging.FileHandler(log_file)
+        file_formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        fh.setFormatter(file_formatter)
+        logger.addHandler(fh)

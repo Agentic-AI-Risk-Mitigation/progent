@@ -252,7 +252,10 @@ def _check_tool_call_impl(
 
     # No rule matched - block by default
     if failed_reasons:
-        reason = f"Tool '{tool_name}' blocked. No matching allow rule found. Reasons:\n- " + "\n- ".join(failed_reasons)
+        reason = (
+            f"Tool '{tool_name}' blocked. No matching allow rule found. Reasons:\n- "
+            + "\n- ".join(failed_reasons)
+        )
     else:
         reason = f"Tool '{tool_name}' blocked: no policy rule matched the provided arguments."
 

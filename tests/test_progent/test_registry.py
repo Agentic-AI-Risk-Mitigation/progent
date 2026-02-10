@@ -16,10 +16,11 @@ def test_registry_registration_and_enforcement():
 
     # Manually load a policy that denies "admin"
     from progent.core import update_security_policy
+
     policy = {
         "sensitive_tool": [
-            (1, 1, {"user": "admin"}, 0), # Deny admin
-            (2, 0, {}, None)              # Allow everyone else
+            (1, 1, {"user": "admin"}, 0),  # Deny admin
+            (2, 0, {}, None),  # Allow everyone else
         ]
     }
     update_security_policy(policy)
@@ -39,6 +40,7 @@ def test_registry_registration_and_enforcement():
     with pytest.raises(ProgentBlockedError):
         tool_func(user="admin")
 
+
 def test_registry_auto_discovery():
     registry = ProgentRegistry()
 
@@ -49,6 +51,7 @@ def test_registry_auto_discovery():
     registry.initialize()
 
     from progent.core import get_available_tools
+
     tools = get_available_tools()
 
     found = next((t for t in tools if t["name"] == "my_tool"), None)

@@ -1,4 +1,3 @@
-
 # Mock dependencies if not installed
 import sys
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -22,6 +21,7 @@ def mock_check_tool_call():
     with patch("progent.adapters.mcp.check_tool_call") as mock:
         yield mock
 
+
 @pytest.mark.asyncio
 async def test_mcp_middleware_allowed(mock_check_tool_call):
     # Setup
@@ -41,6 +41,7 @@ async def test_mcp_middleware_allowed(mock_check_tool_call):
     mock_check_tool_call.assert_called_once_with("test_tool", {"arg": "val"})
     call_next.assert_called_once_with(context)
     assert result == "result"
+
 
 @pytest.mark.asyncio
 async def test_mcp_middleware_blocked(mock_check_tool_call):
@@ -63,6 +64,7 @@ async def test_mcp_middleware_blocked(mock_check_tool_call):
 
     call_next.assert_not_called()
 
+
 @pytest.mark.asyncio
 async def test_mcp_middleware_callback(mock_check_tool_call):
     # Setup
@@ -81,6 +83,7 @@ async def test_mcp_middleware_callback(mock_check_tool_call):
 
     # Verify callback
     callback.assert_called_once_with("blocked_tool", {"x": 1}, "Blocked")
+
 
 def test_create_secured_mcp_server():
     # Test convenience function

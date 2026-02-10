@@ -74,10 +74,7 @@ class ProgentRegistry:
         params = {}
         for pname, param in sig.parameters.items():
             # Basic type inference (could be improved)
-            params[pname] = {
-                "type": "string",
-                "description": f"The {pname} parameter"
-            }
+            params[pname] = {"type": "string", "description": f"The {pname} parameter"}
             if param.annotation is int:
                 params[pname]["type"] = "integer"
             elif param.annotation is float:
@@ -128,10 +125,7 @@ class ProgentRegistry:
 
     def get_all_tools(self) -> dict[str, Callable]:
         """Get all registered tools, wrapped with enforcement."""
-        return {
-            name: self._wrap_tool(func, name)
-            for name, func in self._tools.items()
-        }
+        return {name: self._wrap_tool(func, name) for name, func in self._tools.items()}
 
     def execute(self, name: str, **kwargs) -> Any:
         """Execute a tool by name with enforcement."""

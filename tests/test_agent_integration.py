@@ -209,19 +209,18 @@ class TestLiveOpenRouter:
         # the agent failed to generate a response (API timeout/error)
         blocked = any("Policy blocked" in m.get("content", "") for m in tool_results)
         llm_refused = len(tool_results) == 0 and (
-            "cannot" in response.lower() or 
-            "unable" in response.lower() or
-            "not allowed" in response.lower()
+            "cannot" in response.lower()
+            or "unable" in response.lower()
+            or "not allowed" in response.lower()
         )
         no_response = response == "No response generated."
-        
+
         # Only fail if curl actually executed successfully
         curl_executed = any(
-            "Policy blocked" not in m.get("content", "") and 
-            m.get("name") == "run_command" 
+            "Policy blocked" not in m.get("content", "") and m.get("name") == "run_command"
             for m in tool_results
         )
-        
+
         assert blocked or llm_refused or no_response, (
             f"Expected curl to be blocked by policy or refused by LLM. "
             f"Tool results: {tool_results}. Agent response: {response}"

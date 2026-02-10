@@ -95,7 +95,7 @@ Tom Wilson,Engineering,110000,2017-06-18
 Lisa Taylor,HR,60000,2021-04-12"""
         else:
             return f"Mock data not available for {filename}"
-    
+
     # Use curl on Unix, curl is also available on Windows 10+
     return run_command(f'curl -s "{url}"')
 

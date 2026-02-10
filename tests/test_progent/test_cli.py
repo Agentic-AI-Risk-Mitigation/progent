@@ -12,12 +12,7 @@ from progent.cli import main
 class TestCLI:
     @pytest.fixture
     def policy_file(self):
-        policy = {
-            "my_tool": [
-                [1, 1, {"arg": "unsafe"}, 0],
-                [2, 0, {}, None]
-            ]
-        }
+        policy = {"my_tool": [[1, 1, {"arg": "unsafe"}, 0], [2, 0, {}, None]]}
         with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as f:
             json.dump(policy, f)
             path = f.name
@@ -28,9 +23,12 @@ class TestCLI:
         test_args = [
             "progent",
             "check",
-            "--policy", policy_file,
-            "--tool", "my_tool",
-            "--args", '{"arg": "safe"}'
+            "--policy",
+            policy_file,
+            "--tool",
+            "my_tool",
+            "--args",
+            '{"arg": "safe"}',
         ]
         with patch.object(sys, "argv", test_args):
             with pytest.raises(SystemExit) as e:
@@ -41,9 +39,12 @@ class TestCLI:
         test_args = [
             "progent",
             "check",
-            "--policy", policy_file,
-            "--tool", "my_tool",
-            "--args", '{"arg": "unsafe"}'
+            "--policy",
+            policy_file,
+            "--tool",
+            "my_tool",
+            "--args",
+            '{"arg": "unsafe"}',
         ]
         with patch.object(sys, "argv", test_args):
             with pytest.raises(SystemExit) as e:
@@ -54,9 +55,12 @@ class TestCLI:
         test_args = [
             "progent",
             "check",
-            "--policy", "non_existent.json",
-            "--tool", "my_tool",
-            "--args", "{}"
+            "--policy",
+            "non_existent.json",
+            "--tool",
+            "my_tool",
+            "--args",
+            "{}",
         ]
         with patch.object(sys, "argv", test_args):
             with pytest.raises(SystemExit) as e:
@@ -69,35 +73,28 @@ class TestCLI:
         # to avoid complex setup, or just trust the fixture policy if it has no conflicts.
         # The fixture policy has 1 rule per tool, so no overlap.
 
-        test_args = [
-            "progent",
-            "analyze",
-            "--policy", policy_file
-        ]
+        test_args = ["progent", "analyze", "--policy", policy_file]
 
         # Mock analysis to return empty list (no conflicts)
-        with patch("progent.analysis.analyze_policies", return_value=[]), \
-             patch("progent.analysis.check_policy_type_errors", return_value=[]):
+        with (
+            patch("progent.analysis.analyze_policies", return_value=[]),
+            patch("progent.analysis.check_policy_type_errors", return_value=[]),
+        ):
             with patch.object(sys, "argv", test_args):
                 with pytest.raises(SystemExit) as e:
                     main()
                 assert e.value.code == 0
 
     def test_analyze_with_conflicts(self, policy_file):
-        test_args = [
-            "progent",
-            "analyze",
-            "--policy", policy_file
-        ]
+        test_args = ["progent", "analyze", "--policy", policy_file]
 
         # Mock analysis to return warnings
-        with patch("progent.analysis.analyze_policies", return_value=["Conflict detected"]), \
-             patch("progent.analysis.check_policy_type_errors", return_value=[]):
+        with (
+            patch("progent.analysis.analyze_policies", return_value=["Conflict detected"]),
+            patch("progent.analysis.check_policy_type_errors", return_value=[]),
+        ):
             with patch.object(sys, "argv", test_args):
                 with pytest.raises(SystemExit) as e:
                     main()
                 # Should exit with 1 if conflicts found
                 assert e.value.code == 1
-
-
-

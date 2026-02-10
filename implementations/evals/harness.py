@@ -5,10 +5,10 @@ This module provides the `Evaluator` class and helper functions to run
 scenarios against the agent and verify the results.
 """
 
-import logging
 import io
+import logging
 from dataclasses import dataclass, field
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 from implementations.frameworks.langchain_agent import LangChainAgent
 
@@ -28,11 +28,11 @@ class Scenario:
 @dataclass
 class ExecutionLog:
     """Tracks tool execution events during a scenario run."""
-    
+
     blocked_tools: list[dict] = field(default_factory=list)
     allowed_tools: list[dict] = field(default_factory=list)
     tool_calls: list[str] = field(default_factory=list)
-    
+
     def parse_log_line(self, line: str):
         """Parse a log line and extract tool execution info."""
         if "PROGENT: BLOCKED" in line:
@@ -53,13 +53,13 @@ class ExecutionLog:
                 self.tool_calls.append(f"ALLOWED:{tool_name}")
             except IndexError:
                 pass
-    
+
     def has_blocked_tool(self, tool_name: str = None) -> bool:
         """Check if any tool was blocked (or specific tool if provided)."""
         if tool_name:
             return any(t["tool"] == tool_name for t in self.blocked_tools)
         return len(self.blocked_tools) > 0
-    
+
     def has_allowed_tool(self, tool_name: str = None) -> bool:
         """Check if any tool was allowed (or specific tool if provided)."""
         if tool_name:
@@ -70,7 +70,11 @@ class ExecutionLog:
 class Evaluator:
     """Runs scenarios and reports results."""
 
-    def __init__(self, agent_cls=LangChainAgent, policy_path: str = "implementations/evals/eval_policies.json"):
+    def __init__(
+        self,
+        agent_cls=LangChainAgent,
+        policy_path: str = "implementations/evals/eval_policies.json",
+    ):
         self.agent_cls = agent_cls
         self.policy_path = policy_path
         self.results = []
@@ -85,11 +89,11 @@ class Evaluator:
         self.log_stream = io.StringIO()
         self.log_handler = logging.StreamHandler(self.log_stream)
         self.log_handler.setLevel(logging.INFO)
-        
+
         # Add handler to capture progent and agent logs
         logging.getLogger("progent").addHandler(self.log_handler)
         logging.getLogger("agent").addHandler(self.log_handler)
-    
+
     def _get_execution_log(self) -> ExecutionLog:
         """Extract execution log from captured logs."""
         exec_log = ExecutionLog()
@@ -113,21 +117,21 @@ class Evaluator:
         agent = self.agent_cls(
             config={"llm": {"model": "deepseek/deepseek-v3.2"}, "agent": {}},
             workspace="./test_workspace",
-            policies_path=self.policy_path
+            policies_path=self.policy_path,
         )
 
         try:
             response = agent.run(scenario.prompt)
             print(f"Agent Response: {response}")
-            
+
             # Get execution log with blocked/allowed tools
             exec_log = self._get_execution_log()
-            
+
             # Run validation logic (pass both response and exec_log if validator accepts it)
             # For now, just use response - we'll enhance validators to use exec_log later
             passed = scenario.validator(response)
             status = "PASSED" if passed else "FAILED"
-            
+
             result = {
                 "name": scenario.name,
                 "category": scenario.category,
@@ -147,14 +151,14 @@ class Evaluator:
                 "category": scenario.category,
                 "status": "ERROR",
                 "response": str(e),
-                "details": str(e)
+                "details": str(e),
             }
 
     def generate_report(self):
         """Print a summary table of results."""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print(f"{'CATEGORY':<15} | {'SCENARIO':<20} | {'STATUS':<10}")
         print("-" * 60)
         for res in self.results:
             print(f"{res['category']:<15} | {res['name']:<20} | {res['status']:<10}")
-        print("="*60 + "\n")
+        print("=" * 60 + "\n")

@@ -15,6 +15,7 @@ from typing import Any
 # Load .env file if available
 try:
     from dotenv import load_dotenv
+
     load_dotenv()
 except ImportError:
     pass

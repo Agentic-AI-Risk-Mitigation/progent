@@ -1,7 +1,7 @@
-
 print("Starting openai import test...", flush=True)
 try:
-    import openai
+    import openai  # noqa: F401
+
     print("OpenAI imported successfully.", flush=True)
 except ImportError:
     print("OpenAI import failed.", flush=True)

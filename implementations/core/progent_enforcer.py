@@ -116,6 +116,7 @@ def wrap_tool_with_enforcement(func: Callable, tool_name: str) -> Callable:
 
     return wrapper
 
+
 class ProgentEnforcedRegistry(ProgentRegistry):
     """
     A tool registry that automatically enforces Progent policies
@@ -130,4 +131,3 @@ class ProgentEnforcedRegistry(ProgentRegistry):
         Wrap tool with the logging-enabled enforcement wrapper.
         """
         return wrap_tool_with_enforcement(func, tool_name)
-

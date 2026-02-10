@@ -6,7 +6,7 @@ This script registers tools and then you can use the CLI.
 Run this in one terminal, then use `progent generate` in another.
 """
 
-from progent import update_available_tools
+from progent import generate_policies, update_available_tools
 
 # Register some example tools
 tools = [
@@ -17,43 +17,37 @@ tools = [
             "to": {"type": "string", "description": "Recipient email address"},
             "subject": {"type": "string", "description": "Email subject"},
             "body": {"type": "string", "description": "Email body text"},
-        }
+        },
     },
     {
         "name": "read_file",
         "description": "Read contents of a file",
-        "args": {
-            "path": {"type": "string", "description": "File path to read"}
-        }
+        "args": {"path": {"type": "string", "description": "File path to read"}},
     },
     {
         "name": "write_file",
         "description": "Write content to a file",
         "args": {
             "path": {"type": "string", "description": "File path to write"},
-            "content": {"type": "string", "description": "Content to write"}
-        }
+            "content": {"type": "string", "description": "Content to write"},
+        },
     },
     {
         "name": "execute_command",
         "description": "Execute a shell command",
-        "args": {
-            "command": {"type": "string", "description": "Shell command to execute"}
-        }
-    }
+        "args": {"command": {"type": "string", "description": "Shell command to execute"}},
+    },
 ]
 
 update_available_tools(tools)
 
-# Now you can import and use generation
-from progent import generate_policies
+# Now you can use generation
 
 print("Tools registered. Generating policy...")
 print()
 
 generated = generate_policies(
-    query="Send an email to john@example.com about the project status",
-    manual_confirm=True
+    query="Send an email to john@example.com about the project status", manual_confirm=True
 )
 
 if generated:

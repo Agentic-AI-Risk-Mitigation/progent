@@ -11,25 +11,30 @@ Requirements:
 """
 
 import os
+
 from progent import (
+    ProgentBlockedError,
+    check_tool_call,
     generate_policies,
     update_available_tools,
-    check_tool_call,
-    ProgentBlockedError,
 )
+
 
 # Step 1: Define and register some tools
 def send_email(to: str, subject: str, body: str) -> str:
     """Send an email."""
     return f"Email sent to {to}"
 
+
 def read_file(path: str) -> str:
     """Read a file from disk."""
     return f"Contents of {path}"
 
+
 def delete_file(path: str) -> str:
     """Delete a file from disk."""
     return f"Deleted {path}"
+
 
 # Register tools with Progent
 tools = [
@@ -40,22 +45,18 @@ tools = [
             "to": {"type": "string", "description": "Recipient email"},
             "subject": {"type": "string", "description": "Email subject"},
             "body": {"type": "string", "description": "Email body"},
-        }
+        },
     },
     {
         "name": "read_file",
         "description": "Read a file from disk",
-        "args": {
-            "path": {"type": "string", "description": "File path"}
-        }
+        "args": {"path": {"type": "string", "description": "File path"}},
     },
     {
         "name": "delete_file",
         "description": "Delete a file from disk",
-        "args": {
-            "path": {"type": "string", "description": "File path"}
-        }
-    }
+        "args": {"path": {"type": "string", "description": "File path"}},
+    },
 ]
 
 update_available_tools(tools)
@@ -88,41 +89,47 @@ else:
     # Generate with manual confirmation
     generated = generate_policies(
         query=user_query,
-        manual_confirm=True  # Ask user to approve
+        manual_confirm=True,  # Ask user to approve
     )
 
     if generated:
         print(f"\n✅ Generated policy for {len(generated)} tools")
-        
+
         # Step 3: Test the policy
         print("\n" + "=" * 60)
         print("Testing generated policy...")
         print("=" * 60)
-        
+
         # This should be ALLOWED
         print("\n1. Allowed call:")
         try:
-            check_tool_call("send_email", {
-                "to": "john@example.com",
-                "subject": "Meeting tomorrow",
-                "body": "Let's meet at 2pm"
-            })
+            check_tool_call(
+                "send_email",
+                {
+                    "to": "john@example.com",
+                    "subject": "Meeting tomorrow",
+                    "body": "Let's meet at 2pm",
+                },
+            )
             print("   ✅ ALLOWED")
         except ProgentBlockedError as e:
             print(f"   ❌ BLOCKED: {e.reason}")
-        
+
         # This should be BLOCKED (wrong recipient)
         print("\n2. Blocked call (wrong recipient):")
         try:
-            check_tool_call("send_email", {
-                "to": "attacker@evil.com",
-                "subject": "Meeting tomorrow",
-                "body": "Malicious content"
-            })
+            check_tool_call(
+                "send_email",
+                {
+                    "to": "attacker@evil.com",
+                    "subject": "Meeting tomorrow",
+                    "body": "Malicious content",
+                },
+            )
             print("   ✅ ALLOWED")
         except ProgentBlockedError as e:
             print(f"   ❌ BLOCKED: {e.reason}")
-        
+
         # This should be BLOCKED (unrelated tool)
         print("\n3. Blocked call (unrelated tool):")
         try:

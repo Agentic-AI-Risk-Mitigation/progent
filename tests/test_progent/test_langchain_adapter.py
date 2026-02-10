@@ -1,4 +1,3 @@
-
 import importlib
 import sys
 from unittest.mock import MagicMock, patch
@@ -16,6 +15,7 @@ class MockBaseTool:
         self.args = args
         self._to_args_and_kwargs = MagicMock(return_value=((), {}))
 
+
 @pytest.fixture
 def mock_langchain_env():
     """
@@ -29,10 +29,13 @@ def mock_langchain_env():
     mock_core.tools.StructuredTool = MagicMock()
 
     # We patch sys.modules to insert our mocks
-    with patch.dict(sys.modules, {
-        "langchain_core": mock_core,
-        "langchain_core.tools": mock_core.tools,
-    }):
+    with patch.dict(
+        sys.modules,
+        {
+            "langchain_core": mock_core,
+            "langchain_core.tools": mock_core.tools,
+        },
+    ):
         # Reload the target module to pick up the mocked langchain
         # We handle the case where it might or might not be imported yet
         if "progent.adapters.langchain" in sys.modules:
@@ -48,6 +51,7 @@ def mock_langchain_env():
         if "progent.wrapper" in sys.modules:
             importlib.reload(sys.modules["progent.wrapper"])
 
+
 # Use the fixture in all tests in this execution
 @pytest.fixture(autouse=True)
 def setup_env(mock_langchain_env):
@@ -56,28 +60,37 @@ def setup_env(mock_langchain_env):
 
 def get_target_module():
     import progent.adapters.langchain as target
+
     return target
+
 
 @pytest.fixture
 def mock_check_tool_call():
     with patch("progent.adapters.langchain.check_tool_call") as mock:
         yield mock
 
+
 @pytest.fixture
 def mock_get_available_tools():
     with patch("progent.adapters.langchain.get_available_tools", return_value=[]) as mock:
         yield mock
+
 
 @pytest.fixture
 def mock_update_available_tools():
     with patch("progent.adapters.langchain.update_available_tools") as mock:
         yield mock
 
-def test_secure_langchain_tool_allowed(mock_check_tool_call, mock_get_available_tools, mock_update_available_tools):
+
+def test_secure_langchain_tool_allowed(
+    mock_check_tool_call, mock_get_available_tools, mock_update_available_tools
+):
     target = get_target_module()
 
     # Setup
-    tool = MockBaseTool(name="test_tool", description="A test tool", args={"arg1": {"type": "string"}})
+    tool = MockBaseTool(
+        name="test_tool", description="A test tool", args={"arg1": {"type": "string"}}
+    )
     tool._to_args_and_kwargs.return_value = ((), {"arg1": "value"})
 
     # Wrap
@@ -89,7 +102,10 @@ def test_secure_langchain_tool_allowed(mock_check_tool_call, mock_get_available_
     # Verify
     mock_check_tool_call.assert_called_once_with("test_tool", {"arg1": "value"})
 
-def test_secure_langchain_tool_blocked(mock_check_tool_call, mock_get_available_tools, mock_update_available_tools):
+
+def test_secure_langchain_tool_blocked(
+    mock_check_tool_call, mock_get_available_tools, mock_update_available_tools
+):
     target = get_target_module()
 
     tool = MockBaseTool(name="dangerous_tool", description="Dangerous", args={})
@@ -102,7 +118,10 @@ def test_secure_langchain_tool_blocked(mock_check_tool_call, mock_get_available_
     with pytest.raises(ProgentBlockedError):
         secured._to_args_and_kwargs()
 
-def test_create_secured_tool(mock_check_tool_call, mock_get_available_tools, mock_update_available_tools):
+
+def test_create_secured_tool(
+    mock_check_tool_call, mock_get_available_tools, mock_update_available_tools
+):
     target = get_target_module()
 
     def my_function(x: int):
@@ -113,7 +132,9 @@ def test_create_secured_tool(mock_check_tool_call, mock_get_available_tools, moc
 
     # Access the mock from sys.modules to configure it
     # We must configure the mock that the module sees
-    sys.modules["langchain_core.tools"].StructuredTool.from_function.return_value = mock_tool_instance
+    sys.modules[
+        "langchain_core.tools"
+    ].StructuredTool.from_function.return_value = mock_tool_instance
 
     # Execute
     target.create_secured_tool(my_function)
@@ -128,7 +149,7 @@ def test_create_secured_tool(mock_check_tool_call, mock_get_available_tools, moc
 
     # Verify execution wrapper
     mock_structured_tool = sys.modules["langchain_core.tools"].StructuredTool
-    wrapper_func = mock_structured_tool.from_function.call_args.kwargs['func']
+    wrapper_func = mock_structured_tool.from_function.call_args.kwargs["func"]
 
     wrapper_func(x=5)
     mock_check_tool_call.assert_called_once_with("my_function", {"x": 5})
