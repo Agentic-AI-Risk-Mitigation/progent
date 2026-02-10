@@ -1,6 +1,6 @@
 """Communication tools for the coding agent (dummy implementations)."""
 
-from core.logging_utils import get_logger
+from implementations.core.logging_utils import get_logger
 
 
 def send_email(to: str, subject: str, body: str) -> str:

@@ -192,3 +192,68 @@ def _check_type_specific_keywords(schema: dict, path: str = "") -> list[str]:
                         )
 
     return warnings
+
+
+def validate_policy_against_tools(
+    policy: dict[str, list],
+    tools: list[dict[str, Any]],
+) -> list[str]:
+    """
+    Validate a security policy against available tool definitions.
+
+    Checks:
+    - Tool existence
+    - Argument existence
+    - Type-specific keyword usage in schemas
+
+    Args:
+        policy: The security policy dict
+        tools: List of tool definitions
+
+    Returns:
+        List of warning messages
+    """
+    warnings = []
+    if not policy:
+        return warnings
+
+    # Create a lookup dict for tools: tool_name -> args_dict
+    tools_lookup = {t["name"]: t.get("args", {}) for t in tools}
+
+    for tool_name, rules in policy.items():
+        if tool_name not in tools_lookup:
+            warnings.append(f"Policy Warning: Tool '{tool_name}' is not available.")
+            continue
+
+        tool_args = tools_lookup[tool_name]
+
+        for rule in rules:
+            # Rule format: (priority, effect, conditions, fallback)
+            if len(rule) < 3:
+                continue
+
+            conditions = rule[2]
+
+            for arg_name, restriction in conditions.items():
+                if arg_name not in tool_args:
+                    warnings.append(
+                        f"Policy Warning: Argument '{arg_name}' is not available for tool '{tool_name}'."
+                    )
+
+                if isinstance(restriction, dict):  # JSON Schema
+                    # Validate schema structure
+                    warnings.extend(validate_schema(restriction))
+
+                    # Check for type-specific keyword misuse
+                    from jsonschema.validators import validator_for
+
+                    try:
+                        validator = validator_for(restriction)
+                        validator.check_schema(restriction)
+                    except Exception as e:
+                        warnings.append(
+                            f"Policy Warning: Invalid restriction for argument '{arg_name}' "
+                            f"in tool '{tool_name}': {e}"
+                        )
+
+    return warnings

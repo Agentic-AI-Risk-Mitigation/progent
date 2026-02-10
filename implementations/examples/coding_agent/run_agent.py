@@ -133,7 +133,7 @@ def main():
     log_dir = (EXAMPLE_DIR / log_dir).resolve()
     log_level = config.get("logging", {}).get("level", "INFO")
 
-    from core.logging_utils import init_logger
+    from implementations.core.logging_utils import init_logger
 
     init_logger(log_dir=str(log_dir), level=log_level)
 
@@ -147,7 +147,7 @@ def main():
 
     try:
         if framework == "langchain":
-            from frameworks.langchain_agent import LangChainAgent
+            from implementations.frameworks.langchain_agent import LangChainAgent
 
             agent = LangChainAgent(
                 config=config,
@@ -155,7 +155,7 @@ def main():
                 policies_path=args.policies,
             )
         elif framework == "adk":
-            from frameworks.adk_agent import ADKAgent
+            from implementations.frameworks.adk_agent import ADKAgent
 
             agent = ADKAgent(
                 config=config,
@@ -163,7 +163,7 @@ def main():
                 policies_path=args.policies,
             )
         elif framework == "raw_sdk":
-            from frameworks.raw_sdk_agent import RawSDKAgent
+            from implementations.frameworks.raw_sdk_agent import RawSDKAgent
 
             agent = RawSDKAgent(
                 config=config,
@@ -171,7 +171,7 @@ def main():
                 policies_path=args.policies,
             )
         elif framework == "claude_sdk":
-            from frameworks.claude_sdk_agent import ClaudeSDKAgent
+            from implementations.frameworks.claude_sdk_agent import ClaudeSDKAgent
 
             agent = ClaudeSDKAgent(
                 config=config,

@@ -24,10 +24,14 @@ class ProgentBlockedError(ProgentError):
         tool_name: str,
         arguments: dict = None,
         reason: str = None,
+        policy_rule: tuple | None = None,
+        failed_condition: str | None = None,
     ):
         self.tool_name = tool_name
         self.arguments = arguments or {}
         self.reason = reason or f"Tool '{tool_name}' is not allowed."
+        self.policy_rule = policy_rule
+        self.failed_condition = failed_condition
 
         super().__init__(self.reason)
 

@@ -37,6 +37,31 @@ from progent.exceptions import PolicyValidationError, ProgentBlockedError
 from progent.policy import load_policies
 from progent.wrapper import apply_secure_tool_wrapper, secure_tool_wrapper
 
+# Optional: LLM-based policy generation (requires progent[generation])
+try:
+    from progent.generation import (
+        generate_policies as generate_policies,
+    )
+    from progent.generation import (
+        get_policy_model as get_policy_model,
+    )
+    from progent.generation import (
+        get_token_usage as get_token_usage,
+    )
+    from progent.generation import (
+        reset_token_usage as reset_token_usage,
+    )
+    from progent.generation import (
+        set_policy_model as set_policy_model,
+    )
+    from progent.generation import (
+        update_policies_from_result as update_policies_from_result,
+    )
+
+    _HAS_GENERATION = True
+except ImportError:
+    _HAS_GENERATION = False
+
 __version__ = "0.1.0"
 
 __all__ = [
@@ -58,3 +83,16 @@ __all__ = [
     "ProgentBlockedError",
     "PolicyValidationError",
 ]
+
+# Add generation functions if available
+if _HAS_GENERATION:
+    __all__.extend(
+        [
+            "generate_policies",
+            "update_policies_from_result",
+            "set_policy_model",
+            "get_policy_model",
+            "get_token_usage",
+            "reset_token_usage",
+        ]
+    )

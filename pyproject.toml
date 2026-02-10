@@ -35,6 +35,9 @@ dependencies = [
     "langchain-openai>=0.2.0,<0.3.0",
 ]
 
+[project.scripts]
+progent = "progent.cli:main"
+
 [project.optional-dependencies]
 # Z3-based policy analysis
 analysis = [

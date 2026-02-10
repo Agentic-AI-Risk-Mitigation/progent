@@ -10,8 +10,15 @@ This is an OPTIONAL module. It requires openai or anthropic to be installed:
 
 import json
 import os
-import sys
 from typing import Any
+
+# Load .env file if available
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv()
+except ImportError:
+    pass
 
 from progent.core import (
     get_available_tools,
@@ -20,6 +27,9 @@ from progent.core import (
     set_user_query,
     update_security_policy,
 )
+from progent.logger import get_logger
+
+_logger = get_logger()
 
 # =============================================================================
 # Configuration
@@ -140,9 +150,16 @@ def _api_request(
             "openai is required for OpenAI models. Install with: pip install progent[generation]"
         )
 
+    # OpenRouter (OpenAI-compatible API)
+    if os.getenv("OPENROUTER_API_KEY"):
+        client = OpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=os.getenv("OPENROUTER_API_KEY"),
+        )
     # Local models via vLLM
-    if model.startswith("meta-llama/") or model.startswith("Qwen/"):
+    elif model.startswith("meta-llama/") or model.startswith("Qwen/"):
         client = OpenAI(base_url="http://127.0.0.1:8000/v1", api_key="EMPTY")
+    # Standard OpenAI
     else:
         client = OpenAI()
 
@@ -220,13 +237,14 @@ def generate_policies(
             generated = _extract_json(response)
 
             if manual_confirm:
+                # Still using print for interactive confirmation as this is a CLI interaction pattern
                 print(
                     f"Generated policy: {json.dumps(generated, indent=2)}\nApply? [y/N]: ",
                     end="",
                     flush=True,
                 )
                 if input().strip().lower() != "y":
-                    print("Policy discarded.", file=sys.stderr)
+                    _logger.info("Policy generation discarded by user.")
                     return {}
 
             # Convert to internal format and apply
@@ -310,7 +328,7 @@ def update_policies_from_result(
                     flush=True,
                 )
                 if input().strip().lower() != "y":
-                    print("Policy discarded.", file=sys.stderr)
+                    _logger.info("Policy update discarded by user.")
                     return None
 
             policies = _convert_generated_policies(generated)

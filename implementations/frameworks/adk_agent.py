@@ -27,10 +27,10 @@ try:
 except ImportError:
     ADK_AVAILABLE = False
 
-from core.progent_enforcer import init_progent
-from core.secured_executor import create_secured_handler
-from core.tool_definitions import TOOL_DEFINITIONS
-from frameworks.base_agent import BaseAgent
+from implementations.core.progent_enforcer import init_progent
+from implementations.core.secured_executor import create_secured_handler
+from implementations.core.tool_definitions import TOOL_DEFINITIONS
+from implementations.frameworks.base_agent import BaseAgent
 
 
 class ADKAgent(BaseAgent):

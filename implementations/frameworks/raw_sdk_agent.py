@@ -18,11 +18,10 @@ from typing import Any, Optional
 # Add parent to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from core.progent_enforcer import init_progent
-from core.secured_executor import create_secured_handler
-from core.tool_definitions import TOOL_DEFINITIONS
-from frameworks.base_agent import BaseAgent
-
+from implementations.core.progent_enforcer import init_progent
+from implementations.core.secured_executor import create_secured_handler
+from implementations.core.tool_definitions import TOOL_DEFINITIONS
+from implementations.frameworks.base_agent import BaseAgent
 from implementations.llms import get_llm_provider
 
 

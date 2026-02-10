@@ -11,9 +11,10 @@ from dataclasses import dataclass
 from typing import Any, Callable, Optional, Type
 
 from pydantic import BaseModel, Field, create_model
-from tools.command_tools import run_command
-from tools.communication_tools import send_email
-from tools.file_tools import (
+
+from implementations.tools.command_tools import fetch_url, git_clone, pip_install, run_command
+from implementations.tools.communication_tools import send_email
+from implementations.tools.file_tools import (
     edit_file,
     list_directory,
     read_file,
@@ -216,6 +217,56 @@ TOOL_DEFINITIONS: list[ToolDefinition] = [
             ),
         ],
         handler=send_email,
+    ),
+    ToolDefinition(
+        name="pip_install",
+        description="Install a Python package using pip.",
+        parameters=[
+            ToolParameter(
+                name="package_name",
+                type="string",
+                description="Name of the package to install",
+            ),
+            ToolParameter(
+                name="upgrade",
+                type="boolean",
+                description="Whether to upgrade the package if it exists",
+                required=False,
+                default=False,
+            ),
+        ],
+        handler=pip_install,
+    ),
+    ToolDefinition(
+        name="fetch_url",
+        description="Fetch content from a URL via HTTP GET.",
+        parameters=[
+            ToolParameter(
+                name="url",
+                type="string",
+                description="The URL to fetch",
+            ),
+        ],
+        handler=fetch_url,
+    ),
+    ToolDefinition(
+        name="git_clone",
+        description="Clone a git repository.",
+        parameters=[
+            ToolParameter(
+                name="repo_url",
+                type="string",
+                description="URL of the repository to clone",
+            ),
+            ToolParameter(
+                name="target_dir",
+                type="string",
+                description="Directory to clone into (optional)",
+                required=False,
+                default=None,
+            ),
+        ],
+        handler=git_clone,
     ),
 ]
 

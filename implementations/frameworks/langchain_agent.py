@@ -17,16 +17,17 @@ from typing import Any, Optional
 # Add parent to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from core.progent_enforcer import init_progent
-from core.secured_executor import create_secured_handler
-from core.tool_definitions import TOOL_DEFINITIONS
 from dotenv import load_dotenv
-from frameworks.base_agent import BaseAgent
 from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.tools import StructuredTool
 from langchain_openai import ChatOpenAI
+
+from implementations.core.progent_enforcer import init_progent
+from implementations.core.secured_executor import create_secured_handler
+from implementations.core.tool_definitions import TOOL_DEFINITIONS
+from implementations.frameworks.base_agent import BaseAgent
 
 load_dotenv()
 
