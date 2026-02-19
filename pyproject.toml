@@ -70,9 +70,27 @@ claude-sdk = [
     "claude-agent-sdk>=0.1.29",
 ]
 
+# ── Raw SDK provider extras ───────────────────────────────────────────────────
+
+# Anthropic Claude provider (raw_sdk_agent: anthropic/<model>)
+anthropic = [
+    "anthropic>=0.20",
+]
+
+# Google Gemini provider (raw_sdk_agent: google/<model> or gemini/<model>)
+# Note: also pulled in by the 'adk' extra above
+google = [
+    "google-genai>=1.61.0",
+]
+
+# AWS Bedrock provider (raw_sdk_agent: bedrock/<model-id> or aws/<model-id>)
+bedrock = [
+    "boto3>=1.34.0",
+]
+
 # All optional dependencies
 all = [
-    "progent[analysis,generation,langchain,mcp,adk,claude-sdk]",
+    "progent[analysis,generation,langchain,mcp,adk,claude-sdk,anthropic,google,bedrock]",
 ]
 
 # Development dependencies

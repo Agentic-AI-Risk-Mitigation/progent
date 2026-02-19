@@ -2,12 +2,30 @@
 Raw SDK agent implementation using abstracted LLM providers.
 
 This is a THIN ADAPTER that:
-1. Converts unified tool definitions to OpenAI function format
-2. Handles the tool calling loop manually
+1. Converts unified tool definitions to OpenAI function-calling format
+2. Handles the tool-calling loop manually
 3. Delegates LLM calls to the appropriate provider based on model name
 
 Tool definitions and policy enforcement are handled by core modules.
 DO NOT define tools or policy logic here.
+
+Supported model string format: "<provider>/<model-name>"
+
+    openai/gpt-4o
+    anthropic/claude-3-5-sonnet-20241022
+    google/gemini-2.0-flash          (also: gemini/...)
+    azure/<deployment-name>
+    ollama/llama3.2
+    vllm/meta-llama/Llama-3.3-70B-Instruct
+    bedrock/anthropic.claude-3-5-sonnet-20241022-v2:0   (also: aws/...)
+    together/meta-llama/Llama-3-70b-chat-hf
+    openrouter/anthropic/claude-3.5-sonnet
+
+Provider-specific config keys (under llm: in config.yaml):
+    api_key      – override env-var API key
+    api_base     – override API endpoint URL (base_url)
+    api_version  – Azure API version (default: 2024-02-01)
+    region       – AWS region for Bedrock (default: us-east-1)
 """
 
 import json
@@ -29,8 +47,8 @@ class RawSDKAgent(BaseAgent):
     """
     Agent implementation using abstracted LLM providers.
 
-    Supports 'provider/model-name' format for model specification.
-    Currently supports 'openai' and 'together' providers.
+    Accepts any provider registered in implementations.llms.
+    Model must be specified as 'provider/model-name'.
     """
 
     def __init__(
@@ -52,15 +70,21 @@ class RawSDKAgent(BaseAgent):
             self.provider_name = provider_parts[0]
             self.model_name = provider_parts[1]
         else:
-            # Default to openai if no provider specified
-            self.provider_name = "openai"
-            self.model_name = full_model_name
+            # print a helpful error message
+            print("Error: Invalid model name. Please use the format 'provider/model-name'.")
 
-        # Provider configuration
+        # Provider configuration — collect all optional provider-specific keys
         provider_kwargs = {}
-        api_base = llm_config.get("api_base")
-        if api_base:
-            provider_kwargs["base_url"] = api_base
+        if llm_config.get("api_base"):
+            provider_kwargs["base_url"] = llm_config["api_base"]
+        if llm_config.get("api_key"):
+            provider_kwargs["api_key"] = llm_config["api_key"]
+        # Azure: deployment API version
+        if llm_config.get("api_version"):
+            provider_kwargs["api_version"] = llm_config["api_version"]
+        # Bedrock: AWS region
+        if llm_config.get("region"):
+            provider_kwargs["region"] = llm_config["region"]
 
         # Initialize the provider
         try:
