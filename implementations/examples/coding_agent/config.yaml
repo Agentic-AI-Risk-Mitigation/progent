@@ -1,11 +1,11 @@
 llm:
-  provider: openrouter
-  model: deepseek/deepseek-v3.2
-  api_base: https://openrouter.ai/api/v1
+  provider: azure
+  model: azure/gpt-4.1-mini
+  # api_base: https://openrouter.ai/api/v1
   # API key should be set via OPENROUTER_API_KEY environment variable
 
 agent:
-  framework: langchain  # Options: langchain, adk, raw_sdk
+  framework: raw_sdk  # Options: langchain, adk, raw_sdk
   system_prompt: |
     You are a helpful coding assistant with the ability to read, write, and edit files,
     run commands, and help with programming tasks.
