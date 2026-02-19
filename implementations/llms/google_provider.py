@@ -42,14 +42,10 @@ class GoogleProvider(BaseLLMProvider):
             )
 
         self.api_key = (
-            api_key
-            or os.environ.get("GOOGLE_API_KEY")
-            or os.environ.get("GEMINI_API_KEY")
+            api_key or os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
         )
         if not self.api_key:
-            raise ValueError(
-                "GOOGLE_API_KEY or GEMINI_API_KEY not set for GoogleProvider"
-            )
+            raise ValueError("GOOGLE_API_KEY or GEMINI_API_KEY not set for GoogleProvider")
 
         self.client = genai.Client(api_key=self.api_key)
 
@@ -70,9 +66,7 @@ class GoogleProvider(BaseLLMProvider):
                     mapping[tc["id"]] = tc["function"]["name"]
         return mapping
 
-    def _translate_messages(
-        self, messages: List[Dict[str, Any]]
-    ) -> Tuple[Optional[str], List]:
+    def _translate_messages(self, messages: List[Dict[str, Any]]) -> Tuple[Optional[str], List]:
         """Convert OpenAI-format message list to (system_str, google_contents).
 
         Returns typed Content / Part objects from google.genai.types so that
@@ -197,9 +191,7 @@ class GoogleProvider(BaseLLMProvider):
         config_kwargs: Dict[str, Any] = {
             "temperature": temperature,
             # Disable automatic function calling so we drive the loop ourselves
-            "automatic_function_calling": types.AutomaticFunctionCallingConfig(
-                disable=True
-            ),
+            "automatic_function_calling": types.AutomaticFunctionCallingConfig(disable=True),
         }
 
         if system:

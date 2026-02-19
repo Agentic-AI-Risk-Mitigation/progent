@@ -2,10 +2,10 @@ from typing import Dict, Type
 
 from implementations.llms.azure_provider import AzureOpenAIProvider
 from implementations.llms.base_provider import BaseLLMProvider
+from implementations.llms.ollama_provider import OllamaProvider
 from implementations.llms.openai_provider import OpenAIProvider
 from implementations.llms.openrouter_provider import OpenRouterProvider
 from implementations.llms.together_provider import TogetherProvider
-from implementations.llms.ollama_provider import OllamaProvider
 from implementations.llms.vllm_provider import VLLMProvider
 
 # Non-OpenAI providers are imported lazily inside get_llm_provider so that
@@ -21,7 +21,7 @@ PROVIDERS: Dict[str, Type[BaseLLMProvider]] = {
     "openrouter": OpenRouterProvider,
     "azure": AzureOpenAIProvider,
     "ollama": OllamaProvider,
-    "vllm": VLLMProvider
+    "vllm": VLLMProvider,
 }
 
 # Human-friendly aliases for providers that need lazy imports
@@ -73,6 +73,5 @@ def get_llm_provider(provider_name: str, **kwargs) -> BaseLLMProvider:
 
     supported = sorted(set(list(PROVIDERS.keys()) + list(_LAZY_PROVIDERS.keys())))
     raise ValueError(
-        f"Unsupported LLM provider: '{provider_name}'. "
-        f"Supported providers: {supported}"
+        f"Unsupported LLM provider: '{provider_name}'. Supported providers: {supported}"
     )

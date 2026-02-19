@@ -101,9 +101,7 @@ class BedrockProvider(BaseLLMProvider):
                 continue
 
             if role == "user":
-                translated.append(
-                    {"role": "user", "content": [{"text": msg["content"]}]}
-                )
+                translated.append({"role": "user", "content": [{"text": msg["content"]}]})
                 i += 1
                 continue
 

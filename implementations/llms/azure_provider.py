@@ -42,9 +42,7 @@ class AzureOpenAIProvider(BaseLLMProvider):
             raise ValueError("AZURE_OPENAI_ENDPOINT not set for AzureOpenAIProvider")
 
         self.api_version = (
-            api_version
-            or os.environ.get("AZURE_OPENAI_API_VERSION")
-            or _DEFAULT_API_VERSION
+            api_version or os.environ.get("AZURE_OPENAI_API_VERSION") or _DEFAULT_API_VERSION
         )
 
         self.client = AzureOpenAI(

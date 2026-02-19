@@ -33,9 +33,7 @@ class AnthropicProvider(BaseLLMProvider):
 
     def __init__(self, api_key: Optional[str] = None, base_url: Optional[str] = None, **kwargs):
         if not ANTHROPIC_AVAILABLE:
-            raise ImportError(
-                "anthropic package not installed. Install with: uv add anthropic"
-            )
+            raise ImportError("anthropic package not installed. Install with: uv add anthropic")
 
         self.api_key = api_key or os.environ.get("ANTHROPIC_API_KEY")
         if not self.api_key:
